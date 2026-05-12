@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pocketbase/pocketbase/core"
+	deviceconsts "github.com/storganizer/server/internal/modules/devices/constants"
 	"github.com/storganizer/server/internal/wled"
+
+	"github.com/pocketbase/pocketbase/core"
 )
 
 // RunHeartbeat pings every registered device and updates its is_online and
 // last_seen fields. Intended to be called from the cron scheduler.
 func RunHeartbeat(app core.App) {
-	records, err := app.FindAllRecords(Collection)
+	records, err := app.FindAllRecords(deviceconsts.Collection)
 	if err != nil {
 		return
 	}
@@ -24,39 +26,37 @@ func RunHeartbeat(app core.App) {
 // SyncDevice fetches live LED info from WLED and writes led_count, grid_width,
 // and grid_height back to the device record.
 func SyncDevice(app core.App, deviceID string) error {
-	record, err := app.FindRecordById(Collection, deviceID)
+	record, err := app.FindRecordById(deviceconsts.Collection, deviceID)
 	if err != nil {
 		return fmt.Errorf("device not found: %w", err)
 	}
 
-	info, err := fetchInfo(record.GetString(FieldURL))
+	info, err := fetchInfo(record.GetString(deviceconsts.FieldURL))
 	if err != nil {
 		return fmt.Errorf("WLED unreachable: %w", err)
 	}
 
-	record.Set(FieldLEDCount, info.LEDs.Count)
-	record.Set(FieldGridWidth, info.LEDs.Matrix.Width)
-	record.Set(FieldGridHeight, info.LEDs.Matrix.Height)
-	record.Set(FieldIsOnline, true)
-	record.Set(FieldLastSeen, time.Now().UTC())
+	record.Set(deviceconsts.FieldLEDCount, info.LEDs.Count)
+	record.Set(deviceconsts.FieldGridWidth, info.LEDs.Matrix.Width)
+	record.Set(deviceconsts.FieldGridHeight, info.LEDs.Matrix.Height)
+	record.Set(deviceconsts.FieldIsOnline, true)
+	record.Set(deviceconsts.FieldLastSeen, time.Now().UTC())
 	return app.Save(record)
 }
 
-// NewWLEDClient returns a wled.Client pointed at the given device record's URL.
-// Exported so the highlight module can obtain a client without importing devices.
+// NewWLEDClient returns a wled.Client pointed at the given device URL.
+// Exported so other modules can obtain a client without importing devices.
 func NewWLEDClient(deviceURL string) *wled.Client {
 	return wled.NewClient(deviceURL)
 }
 
-// pingDevice checks whether a device responds to /json/info and updates its
-// is_online and last_seen fields. Errors are swallowed to keep the cron job stable.
 func pingDevice(app core.App, record *core.Record) {
-	_, err := fetchInfo(record.GetString(FieldURL))
+	_, err := fetchInfo(record.GetString(deviceconsts.FieldURL))
 	online := err == nil
 
-	record.Set(FieldIsOnline, online)
+	record.Set(deviceconsts.FieldIsOnline, online)
 	if online {
-		record.Set(FieldLastSeen, time.Now().UTC())
+		record.Set(deviceconsts.FieldLastSeen, time.Now().UTC())
 	}
 	_ = app.Save(record) // best-effort
 }

@@ -1,4 +1,4 @@
-package assignments
+package constants
 
 const (
 	Collection = "assignments"

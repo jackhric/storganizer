@@ -1,4 +1,4 @@
-package cells
+package constants
 
 const (
 	Collection = "cells"

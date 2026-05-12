@@ -3,20 +3,23 @@ package cells
 import (
 	"net/http"
 
+	"github.com/storganizer/server/internal/app"
+	cellsmigrations "github.com/storganizer/server/internal/modules/cells/migrations"
+	"github.com/storganizer/server/internal/modules/devices"
+
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/router"
-	"github.com/storganizer/server/internal/modules/devices"
 )
 
-// Module owns the cells collection and the device-sync route.
 type Module struct{}
 
 func New() *Module { return &Module{} }
 
-func (m *Module) Name() string          { return "cells" }
-func (m *Module) Dependencies() []string { return []string{"devices"} }
-func (m *Module) Init(_ core.App) error  { return nil }
-func (m *Module) RegisterHooks(_ core.App) {}
+func (m *Module) Name() string                { return "cells" }
+func (m *Module) Dependencies() []string      { return []string{"devices"} }
+func (m *Module) Migrations() []app.Migration { return cellsmigrations.All() }
+func (m *Module) Init(_ core.App) error        { return nil }
+func (m *Module) RegisterHooks(_ core.App)     {}
 
 // RegisterRoutes adds:
 //

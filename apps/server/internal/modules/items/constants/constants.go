@@ -1,4 +1,4 @@
-package items
+package constants
 
 const (
 	Collection = "items"

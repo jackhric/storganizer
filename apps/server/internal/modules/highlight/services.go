@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pocketbase/pocketbase/core"
 	"github.com/storganizer/server/internal/modules/assignments"
-	"github.com/storganizer/server/internal/modules/cells"
-	"github.com/storganizer/server/internal/modules/devices"
+	assignmentconsts "github.com/storganizer/server/internal/modules/assignments/constants"
+	cellconsts "github.com/storganizer/server/internal/modules/cells/constants"
+	deviceconsts "github.com/storganizer/server/internal/modules/devices/constants"
 	"github.com/storganizer/server/internal/wled"
+
+	"github.com/pocketbase/pocketbase/core"
 )
 
 // Request is the payload for POST /api/highlight.
@@ -30,7 +32,6 @@ func HighlightItems(app core.App, req Request) error {
 		return nil
 	}
 
-	// Group target LED indices by device URL.
 	byDevice := map[string][]wled.LEDColor{}
 
 	for _, itemID := range req.ItemIDs {
@@ -40,19 +41,19 @@ func HighlightItems(app core.App, req Request) error {
 		}
 
 		for _, a := range asgns {
-			cell, err := app.FindRecordById(cells.Collection, a.GetString(assignments.FieldCellID))
+			cell, err := app.FindRecordById(cellconsts.Collection, a.GetString(assignmentconsts.FieldCellID))
 			if err != nil {
 				continue
 			}
 
-			device, err := app.FindRecordById(devices.Collection, cell.GetString(cells.FieldDeviceID))
+			device, err := app.FindRecordById(deviceconsts.Collection, cell.GetString(cellconsts.FieldDeviceID))
 			if err != nil {
 				continue
 			}
 
-			url := device.GetString(devices.FieldURL)
+			url := device.GetString(deviceconsts.FieldURL)
 			byDevice[url] = append(byDevice[url], wled.LEDColor{
-				Index: cell.GetInt(cells.FieldLEDIndex),
+				Index: cell.GetInt(cellconsts.FieldLEDIndex),
 				R:     req.Color.R,
 				G:     req.Color.G,
 				B:     req.Color.B,

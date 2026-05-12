@@ -1,4 +1,4 @@
-package devices
+package constants
 
 const (
 	Collection = "devices"
