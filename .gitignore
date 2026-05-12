@@ -14,6 +14,10 @@ apps/server/pb_public
 apps/server/server
 apps/server/*.exe
 
+# Claude
+CLAUDE.md
+AGENTS.md
+
 # Env files
 .env
 .env.local

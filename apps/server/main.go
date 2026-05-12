@@ -4,18 +4,28 @@ import (
 	"log"
 
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/core"
+	"github.com/storganizer/server/internal/app"
+	"github.com/storganizer/server/internal/modules/assignments"
+	"github.com/storganizer/server/internal/modules/cells"
+	"github.com/storganizer/server/internal/modules/devices"
+	"github.com/storganizer/server/internal/modules/highlight"
+	"github.com/storganizer/server/internal/modules/items"
 )
 
 func main() {
-	app := pocketbase.New()
+	pb := pocketbase.New()
 
-	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		// Register custom routes and hooks here
-		return se.Next()
-	})
+	if err := app.Register(pb, []app.Module{
+		devices.New(),
+		items.New(),
+		cells.New(),
+		assignments.New(),
+		highlight.New(),
+	}); err != nil {
+		log.Fatal(err)
+	}
 
-	if err := app.Start(); err != nil {
+	if err := pb.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
