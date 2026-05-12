@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+
+# Build outputs
+.next
+.turbo
+dist
+
+# PocketBase data
+apps/server/pb_data
+apps/server/pb_public
+
+# Go binaries
+apps/server/server
+apps/server/*.exe
+
+# Env files
+.env
+.env.local
+.env*.local
