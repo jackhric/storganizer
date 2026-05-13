@@ -1,0 +1,40 @@
+import { pb } from "./client";
+
+// ---- device sync -----------------------------------------------------------
+
+export async function syncDevice(deviceId: string) {
+  return pb.send<{ led_count: number; grid_width: number; grid_height: number }>(
+    `/api/devices/${deviceId}/sync`,
+    { method: "POST" }
+  );
+}
+
+export async function syncDeviceCells(deviceId: string) {
+  return pb.send<{ count: number }>(
+    `/api/devices/${deviceId}/cells/sync`,
+    { method: "POST" }
+  );
+}
+
+// ---- highlight -------------------------------------------------------------
+
+export type HighlightColor = { r: number; g: number; b: number };
+
+export async function highlightItems(
+  itemIds: string[],
+  color: HighlightColor
+) {
+  return pb.send<void>("/api/highlight", {
+    method: "POST",
+    body: JSON.stringify({ item_ids: itemIds, color }),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+export async function clearHighlight(deviceId?: string) {
+  return pb.send<void>("/api/highlight/clear", {
+    method: "POST",
+    body: deviceId ? JSON.stringify({ device_id: deviceId }) : undefined,
+    headers: { "Content-Type": "application/json" },
+  });
+}
