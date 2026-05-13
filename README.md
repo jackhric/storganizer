@@ -1,6 +1,9 @@
 <div align="center">
   <img src="apps/web/public/storganizer.svg" alt="Storganizer" width="320" />
   <p>Make finding your Arduino components a breeze. Easy-to-use inventory management system powered by WLED addressable LEDs</p>
+
+  ![License](https://img.shields.io/github/license/jackhric/storganizer)
+  ![Version](https://img.shields.io/github/package-json/v/jackhric/storganizer)
 </div>
 
 ---
