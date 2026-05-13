@@ -3,6 +3,7 @@ package devices
 import (
 	"net/http"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/storganizer/server/internal/app"
 	deviceconsts "github.com/storganizer/server/internal/modules/devices/constants"
 	devicesmigrations "github.com/storganizer/server/internal/modules/devices/migrations"
@@ -27,7 +28,19 @@ func (m *Module) Init(pbApp core.App) error {
 	return nil
 }
 
-func (m *Module) RegisterHooks(_ core.App) {}
+func (m *Module) RegisterHooks(pbApp core.App) {
+	pbApp.OnRecordCreate(deviceconsts.Collection).BindFunc(func(e *core.RecordEvent) error {
+		if err := ProbeDevice(e.Record.GetString(deviceconsts.FieldURL)); err != nil {
+			return validation.Errors{
+				deviceconsts.FieldURL: validation.NewError(
+					"validation_wled_unreachable",
+					"Could not reach a WLED device at this address",
+				),
+			}
+		}
+		return e.Next()
+	})
+}
 
 // RegisterRoutes adds:
 //

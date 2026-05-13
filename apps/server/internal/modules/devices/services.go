@@ -61,6 +61,13 @@ func pingDevice(app core.App, record *core.Record) {
 	_ = app.Save(record) // best-effort
 }
 
+// ProbeDevice attempts to reach a WLED device at the given URL.
+// Returns an error if the device is unreachable or does not respond with valid WLED data.
+func ProbeDevice(deviceURL string) error {
+	_, err := fetchInfo(deviceURL)
+	return err
+}
+
 func fetchInfo(deviceURL string) (*wled.Info, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
