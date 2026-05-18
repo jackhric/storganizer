@@ -1,128 +1,252 @@
 /**
- * This file was @generated using pocketbase-typegen
- *
- * DO NOT EDIT BY HAND.
- *
- * Regenerate with:
- *   npx pocketbase-typegen --db ../../apps/server/pb_data/data.db --out src/lib/api/types.ts
- *
- * Run after every backend migration, then `npx tsc --noEmit` to catch breakage.
- */
+* This file was @generated using pocketbase-typegen
+*/
 
-import type PocketBase from "pocketbase";
-import type { RecordService } from "pocketbase";
+import type PocketBase from 'pocketbase'
+import type { RecordService } from 'pocketbase'
 
-export type IsoDateString = string;
-export type IsoAutoDateString = string;
-export type RecordIdString = string;
-export type FileNameString = string;
+export const Collections = {
+	Authorigins: "_authOrigins",
+	Externalauths: "_externalAuths",
+	Mfas: "_mfas",
+	Otps: "_otps",
+	Superusers: "_superusers",
+	Assignments: "assignments",
+	Cells: "cells",
+	Devices: "devices",
+	Items: "items",
+	Users: "users",
+} as const
+export type Collections = typeof Collections[keyof typeof Collections]
 
-export enum Collections {
-  Devices = "devices",
-  Items = "items",
-  Cells = "cells",
-  Assignments = "assignments",
+// Alias types for improved usability
+export type IsoDateString = string
+export type IsoAutoDateString = string & { readonly autodate: unique symbol }
+export type RecordIdString = string
+export type FileNameString = string & { readonly filename: unique symbol }
+export type HTMLString = string
+
+type ExpandType<T> = unknown extends T
+	? T extends unknown
+		? { expand?: unknown }
+		: { expand: T }
+	: { expand: T }
+
+// System fields
+export type BaseSystemFields<T = unknown> = {
+	id: RecordIdString
+	collectionId: string
+	collectionName: Collections
+} & ExpandType<T>
+
+export type AuthSystemFields<T = unknown> = {
+	email: string
+	emailVisibility: boolean
+	username: string
+	verified: boolean
+} & BaseSystemFields<T>
+
+// Record types for each collection
+
+export type AuthoriginsRecord = {
+	collectionRef: string
+	created: IsoAutoDateString
+	fingerprint: string
+	id: string
+	recordRef: string
+	updated: IsoAutoDateString
 }
 
-export type BaseSystemFields<T = never> = {
-  id: RecordIdString;
-  collectionId: string;
-  collectionName: Collections;
-  expand?: T;
-};
+export type ExternalauthsRecord = {
+	collectionRef: string
+	created: IsoAutoDateString
+	id: string
+	provider: string
+	providerId: string
+	recordRef: string
+	updated: IsoAutoDateString
+}
 
-export type AuthSystemFields<T = never> = {
-  email: string;
-  emailVisibility: boolean;
-  username: string;
-  verified: boolean;
-} & BaseSystemFields<T>;
+export type MfasRecord = {
+	collectionRef: string
+	created: IsoAutoDateString
+	id: string
+	method: string
+	recordRef: string
+	updated: IsoAutoDateString
+}
 
-// ---- devices ---------------------------------------------------------------
+export type OtpsRecord = {
+	collectionRef: string
+	created: IsoAutoDateString
+	id: string
+	password: string
+	recordRef: string
+	sentTo?: string
+	updated: IsoAutoDateString
+}
 
-export type DevicesRecord = {
-  name: string;
-  url: string;
-  led_count?: number;
-  grid_width?: number;
-  grid_height?: number;
-  is_online?: boolean;
-  last_seen?: IsoDateString;
-  created: IsoAutoDateString;
-  updated: IsoAutoDateString;
-};
-
-export type DevicesResponse<Texpand = unknown> = Required<DevicesRecord> &
-  BaseSystemFields<Texpand>;
-
-// ---- items -----------------------------------------------------------------
-
-export type ItemsRecord = {
-  name: string;
-  description?: string;
-  quantity: number;
-  image?: FileNameString;
-  category?: string;
-  datasheet_url?: string;
-  created: IsoAutoDateString;
-  updated: IsoAutoDateString;
-};
-
-export type ItemsResponse<Texpand = unknown> = Required<ItemsRecord> &
-  BaseSystemFields<Texpand>;
-
-// ---- cells -----------------------------------------------------------------
-
-export type CellsRecord = {
-  device_id: RecordIdString;
-  led_index: number;
-  label?: string;
-  created: IsoAutoDateString;
-  updated: IsoAutoDateString;
-};
-
-export type CellsResponse<Texpand = unknown> = Required<CellsRecord> &
-  BaseSystemFields<Texpand>;
-
-// ---- assignments -----------------------------------------------------------
+export type SuperusersRecord = {
+	created: IsoAutoDateString
+	email: string
+	emailVisibility?: boolean
+	id: string
+	password: string
+	tokenKey: string
+	updated: IsoAutoDateString
+	verified?: boolean
+}
 
 export type AssignmentsRecord = {
-  item_id: RecordIdString;
-  cell_id: RecordIdString;
-  quantity: number;
-  created: IsoAutoDateString;
-  updated: IsoAutoDateString;
-};
+	cell_id: RecordIdString
+	id: string
+	item_id: RecordIdString
+	quantity: number
+}
 
-export type AssignmentsResponse<Texpand = unknown> =
-  Required<AssignmentsRecord> & BaseSystemFields<Texpand>;
+export type CellsRecord = {
+	device_id: RecordIdString
+	id: string
+	label?: string
+	led_index: number
+}
 
-// ---- index types -----------------------------------------------------------
+export type DevicesRecord = {
+	grid_height?: number
+	grid_width?: number
+	id: string
+	is_online?: boolean
+	last_seen?: IsoDateString
+	led_count?: number
+	name: string
+	url: string
+}
+
+export type ItemsRecord<Texternal_links = unknown, Ttags = unknown> = {
+	external_links?: null | Texternal_links
+	id: string
+	image?: FileNameString
+	name: string
+	notes?: string
+	store_url?: string
+	tags?: null | Ttags
+}
+
+export type UsersRecord = {
+	avatar?: FileNameString
+	created: IsoAutoDateString
+	email: string
+	emailVisibility?: boolean
+	id: string
+	name?: string
+	password: string
+	tokenKey: string
+	updated: IsoAutoDateString
+	verified?: boolean
+}
+
+// Response types include system fields and match responses from the PocketBase API
+export type AuthoriginsResponse<Texpand = unknown> = Required<AuthoriginsRecord> & BaseSystemFields<Texpand>
+export type ExternalauthsResponse<Texpand = unknown> = Required<ExternalauthsRecord> & BaseSystemFields<Texpand>
+export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemFields<Texpand>
+export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
+export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
+export type AssignmentsResponse<Texpand = unknown> = Required<AssignmentsRecord> & BaseSystemFields<Texpand>
+export type CellsResponse<Texpand = unknown> = Required<CellsRecord> & BaseSystemFields<Texpand>
+export type DevicesResponse<Texpand = unknown> = Required<DevicesRecord> & BaseSystemFields<Texpand>
+export type ItemsResponse<Texternal_links = unknown, Ttags = unknown, Texpand = unknown> = Required<ItemsRecord<Texternal_links, Ttags>> & BaseSystemFields<Texpand>
+export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
+
+// Types containing all Records and Responses, useful for creating typing helper functions
 
 export type CollectionRecords = {
-  devices: DevicesRecord;
-  items: ItemsRecord;
-  cells: CellsRecord;
-  assignments: AssignmentsRecord;
-};
+	_authOrigins: AuthoriginsRecord
+	_externalAuths: ExternalauthsRecord
+	_mfas: MfasRecord
+	_otps: OtpsRecord
+	_superusers: SuperusersRecord
+	assignments: AssignmentsRecord
+	cells: CellsRecord
+	devices: DevicesRecord
+	items: ItemsRecord
+	users: UsersRecord
+}
 
 export type CollectionResponses = {
-  devices: DevicesResponse;
-  items: ItemsResponse;
-  cells: CellsResponse;
-  assignments: AssignmentsResponse;
-};
+	_authOrigins: AuthoriginsResponse
+	_externalAuths: ExternalauthsResponse
+	_mfas: MfasResponse
+	_otps: OtpsResponse
+	_superusers: SuperusersResponse
+	assignments: AssignmentsResponse
+	cells: CellsResponse
+	devices: DevicesResponse
+	items: ItemsResponse
+	users: UsersResponse
+}
 
-// ---- helpers ---------------------------------------------------------------
+// Utility types for create/update operations
 
-type StripAuto<T> = Omit<T, "id" | "collectionId" | "collectionName" | "expand" | "created" | "updated">;
-type FileFields<T> = { [K in keyof T]: T[K] extends FileNameString ? File | null : T[K] };
+type ProcessCreateAndUpdateFields<T> = Omit<{
+	// Omit AutoDate fields
+	[K in keyof T as Extract<T[K], IsoAutoDateString> extends never ? K : never]: 
+		// Convert FileNameString to File
+		T[K] extends infer U ? 
+			U extends (FileNameString | FileNameString[]) ? 
+				U extends any[] ? File[] : File 
+			: U
+		: never
+}, 'id'>
 
-export type Create<C extends keyof CollectionRecords> = FileFields<StripAuto<CollectionRecords[C]>>;
-export type Update<C extends keyof CollectionRecords> = Partial<Create<C>>;
+// Create type for Auth collections
+export type CreateAuth<T> = {
+	id?: RecordIdString
+	email: string
+	emailVisibility?: boolean
+	password: string
+	passwordConfirm: string
+	verified?: boolean
+} & ProcessCreateAndUpdateFields<T>
 
-export type TypedPocketBase = PocketBase & {
-  collection<T extends keyof CollectionResponses>(
-    idOrName: T
-  ): RecordService<CollectionResponses[T]>;
-};
+// Create type for Base collections
+export type CreateBase<T> = {
+	id?: RecordIdString
+} & ProcessCreateAndUpdateFields<T>
+
+// Update type for Auth collections
+export type UpdateAuth<T> = Partial<
+	Omit<ProcessCreateAndUpdateFields<T>, keyof AuthSystemFields>
+> & {
+	email?: string
+	emailVisibility?: boolean
+	oldPassword?: string
+	password?: string
+	passwordConfirm?: string
+	verified?: boolean
+}
+
+// Update type for Base collections
+export type UpdateBase<T> = Partial<
+	Omit<ProcessCreateAndUpdateFields<T>, keyof BaseSystemFields>
+>
+
+// Get the correct create type for any collection
+export type Create<T extends keyof CollectionResponses> =
+	CollectionResponses[T] extends AuthSystemFields
+		? CreateAuth<CollectionRecords[T]>
+		: CreateBase<CollectionRecords[T]>
+
+// Get the correct update type for any collection
+export type Update<T extends keyof CollectionResponses> =
+	CollectionResponses[T] extends AuthSystemFields
+		? UpdateAuth<CollectionRecords[T]>
+		: UpdateBase<CollectionRecords[T]>
+
+// Type for usage with type asserted PocketBase instance
+// https://github.com/pocketbase/js-sdk#specify-typescript-definitions
+
+export type TypedPocketBase = {
+	collection<T extends keyof CollectionResponses>(
+		idOrName: T
+	): RecordService<CollectionResponses[T]>
+} & PocketBase

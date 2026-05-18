@@ -3,5 +3,5 @@ package migrations
 import "github.com/storganizer/server/internal/app"
 
 func All() []app.Migration {
-	return []app.Migration{CreateAssignments, OpenRules, CascadeDeleteCell}
+	return []app.Migration{CreateAssignments, OpenRules, CascadeDeleteCell, UniqueCellID}
 }
