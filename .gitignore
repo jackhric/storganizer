@@ -17,6 +17,7 @@ apps/server/*.exe
 # Claude
 CLAUDE.md
 AGENTS.md
+.claude/
 
 # Env files
 .env
