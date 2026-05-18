@@ -2,6 +2,7 @@ package devices
 
 import (
 	"net/http"
+	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/storganizer/server/internal/app"
@@ -20,12 +21,11 @@ func (m *Module) Name() string            { return "devices" }
 func (m *Module) Dependencies() []string  { return nil }
 func (m *Module) Migrations() []app.Migration { return devicesmigrations.All() }
 
-// Init registers the 5-second heartbeat that pings all devices.
+// Init registers the per-minute heartbeat that pings all devices.
 func (m *Module) Init(pbApp core.App) error {
-	pbApp.Cron().Add("devices-heartbeat", "@every 5s", func() {
+	return pbApp.Cron().Add("devices-heartbeat", "* * * * *", func() {
 		RunHeartbeat(pbApp)
 	})
-	return nil
 }
 
 func (m *Module) RegisterHooks(pbApp core.App) {
@@ -38,6 +38,8 @@ func (m *Module) RegisterHooks(pbApp core.App) {
 				),
 			}
 		}
+		e.Record.Set(deviceconsts.FieldIsOnline, true)
+		e.Record.Set(deviceconsts.FieldLastSeen, time.Now().UTC())
 		return e.Next()
 	})
 }

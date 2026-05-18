@@ -51,12 +51,15 @@ func NewWLEDClient(deviceURL string) *wled.Client {
 }
 
 func pingDevice(app core.App, record *core.Record) {
-	_, err := fetchInfo(record.GetString(deviceconsts.FieldURL))
+	info, err := fetchInfo(record.GetString(deviceconsts.FieldURL))
 	online := err == nil
 
 	record.Set(deviceconsts.FieldIsOnline, online)
 	if online {
 		record.Set(deviceconsts.FieldLastSeen, time.Now().UTC())
+		record.Set(deviceconsts.FieldLEDCount, info.LEDs.Count)
+		record.Set(deviceconsts.FieldGridWidth, info.LEDs.Matrix.Width)
+		record.Set(deviceconsts.FieldGridHeight, info.LEDs.Matrix.Height)
 	}
 	_ = app.Save(record) // best-effort
 }

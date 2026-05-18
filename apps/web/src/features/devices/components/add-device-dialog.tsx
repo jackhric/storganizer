@@ -44,8 +44,9 @@ export function AddDeviceDialog({ open, onOpenChange }: AddDeviceDialogProps) {
 
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
+    const url = /^https?:\/\//i.test(values.url) ? values.url : `http://${values.url}`;
     try {
-      await mutateAsync({ name: values.name, url: values.url });
+      await mutateAsync({ name: values.name, url });
       reset();
       onOpenChange(false);
     } catch (err) {
@@ -97,7 +98,7 @@ export function AddDeviceDialog({ open, onOpenChange }: AddDeviceDialogProps) {
             <Label htmlFor="url">IP Address / Hostname</Label>
             <Input
               id="url"
-              placeholder="http://192.168.1.42"
+              placeholder="192.168.1.42"
               autoComplete="off"
               {...register("url")}
             />
