@@ -32,8 +32,8 @@ type Info struct {
 	LEDs struct {
 		Count  int `json:"count"`
 		Matrix struct {
-			Width  int `json:"mw"`
-			Height int `json:"mh"`
+			Width  int `json:"w"`
+			Height int `json:"h"`
 		} `json:"matrix"`
 	} `json:"leds"`
 }
