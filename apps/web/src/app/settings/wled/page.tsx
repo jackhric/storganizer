@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { PlusIcon, PlugIcon, ChevronRightIcon, LayersIcon, GridIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,7 @@ function DeviceDetail({ device, onDeleted }: { device: DevicesResponse; onDelete
       {/* Header */}
       <div className="px-6 py-5 border-b border-border">
         <div className="flex items-center gap-3">
-          <Image
+          <img
             src="/wled_device.png"
             alt="device"
             width={40}
@@ -163,7 +162,7 @@ function DeviceDetail({ device, onDeleted }: { device: DevicesResponse; onDelete
 function EmptyDetail() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-muted/30 px-10 py-16 text-center">
-      <Image
+      <img
         src="/wled.png"
         alt="WLED"
         width={280}
@@ -240,7 +239,7 @@ export default function WledSettingsPage() {
                         selectedId === device.id && "bg-muted"
                       )}
                     >
-                      <Image
+                      <img
                         src="/wled_device.png"
                         alt="device"
                         width={32}

@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Loader2Icon, PlusIcon, XIcon } from "lucide-react";
-import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -165,7 +164,11 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
             <div className="flex items-center gap-3">
               {imagePreview && (
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border">
-                  <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
                 </div>
               )}
               <Button

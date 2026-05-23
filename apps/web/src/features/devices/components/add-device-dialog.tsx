@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Loader2Icon } from "lucide-react";
-import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -72,7 +71,7 @@ export function AddDeviceDialog({ open, onOpenChange }: AddDeviceDialogProps) {
           <DialogTitle>Add WLED Device</DialogTitle>
         </DialogHeader>
         <div className="flex justify-center pb-1">
-          <Image
+          <img
             src="/wled.png"
             alt="WLED"
             width={120}
