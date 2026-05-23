@@ -21,7 +21,10 @@ export function useDevices() {
 
     pb.collection("devices").subscribe<DevicesResponse>("*", ({ action, record }) => {
       qc.setQueryData<DevicesResponse[]>(deviceKeys.list(), (old = []) => {
-        if (action === "create") return [...old, record].sort((a, b) => a.name.localeCompare(b.name));
+        if (action === "create") {
+          if (old.some((d) => d.id === record.id)) return old;
+          return [...old, record].sort((a, b) => a.name.localeCompare(b.name));
+        }
         if (action === "update") return old.map((d) => (d.id === record.id ? record : d));
         if (action === "delete") return old.filter((d) => d.id !== record.id);
         return old;
