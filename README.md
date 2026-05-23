@@ -3,7 +3,7 @@
   <p>Make finding your Arduino components a breeze. Easy-to-use inventory management system powered by WLED addressable LEDs</p>
 
 ![License](https://img.shields.io/github/license/jackhric/storganizer)
-![Version](https://img.shields.io/github/package-json/v/jackhric/storganizer)
+![Version](https://img.shields.io/github/package-json/v/jackhric/storganizer?filename=apps%2Fweb%2Fpackage.json)
 
 </div>
 
@@ -22,26 +22,18 @@ Storganizer lets you map physical storage locations (bins, drawers, shelves) to 
 
 **Prerequisites:** Node.js 20+, Go 1.25+
 
-```bash
-# Install dependencies
-npm install
+Run the backend and frontend in separate terminals:
 
-# Run both frontend and backend
-npm run dev
+```bash
+# Backend
+cd apps/server && go run main.go serve
+
+# Frontend
+cd apps/web && npm install && npm run dev
 ```
 
 - Frontend: http://localhost:3000
 - Backend API + Admin UI: http://localhost:8090/\_/
-
-To run them individually:
-
-```bash
-# Backend only
-cd apps/server && go run main.go serve
-
-# Frontend only
-cd apps/web && npm run dev
-```
 
 **Environment variables**
 
@@ -58,7 +50,6 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8090
 | Frontend      | Next.js 16, React 19, TypeScript, TailwindCSS v4, shadcn/ui |
 | Data fetching | TanStack Query v5, PocketBase JS SDK                        |
 | Backend       | Go, PocketBase (embedded SQLite + REST API)                 |
-| Monorepo      | Turborepo, npm workspaces                                   |
 
 ## License
 

@@ -1,11 +1,7 @@
 import type { NextConfig } from "next";
-import path from "path";
-import pkg from "../../package.json";
+import pkg from "./package.json";
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: path.resolve(__dirname, "../.."),
-  },
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
   },
