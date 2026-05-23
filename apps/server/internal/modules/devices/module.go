@@ -2,7 +2,6 @@ package devices
 
 import (
 	"net/http"
-	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/storganizer/server/internal/app"
@@ -30,7 +29,7 @@ func (m *Module) Init(pbApp core.App) error {
 
 func (m *Module) RegisterHooks(pbApp core.App) {
 	pbApp.OnRecordCreate(deviceconsts.Collection).BindFunc(func(e *core.RecordEvent) error {
-		if err := ProbeDevice(e.Record.GetString(deviceconsts.FieldURL)); err != nil {
+		if err := PopulateFromWLED(e.Record); err != nil {
 			return validation.Errors{
 				deviceconsts.FieldURL: validation.NewError(
 					"validation_wled_unreachable",
@@ -38,8 +37,6 @@ func (m *Module) RegisterHooks(pbApp core.App) {
 				),
 			}
 		}
-		e.Record.Set(deviceconsts.FieldIsOnline, true)
-		e.Record.Set(deviceconsts.FieldLastSeen, time.Now().UTC())
 		return e.Next()
 	})
 }

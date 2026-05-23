@@ -71,6 +71,22 @@ func ProbeDevice(deviceURL string) error {
 	return err
 }
 
+// PopulateFromWLED fetches live LED info from WLED and writes it onto the
+// given record in memory (does not save). Intended for use in pre-save hooks
+// where the caller will subsequently save the record.
+func PopulateFromWLED(record *core.Record) error {
+	info, err := fetchInfo(record.GetString(deviceconsts.FieldURL))
+	if err != nil {
+		return err
+	}
+	record.Set(deviceconsts.FieldLEDCount, info.LEDs.Count)
+	record.Set(deviceconsts.FieldGridWidth, info.LEDs.Matrix.Width)
+	record.Set(deviceconsts.FieldGridHeight, info.LEDs.Matrix.Height)
+	record.Set(deviceconsts.FieldIsOnline, true)
+	record.Set(deviceconsts.FieldLastSeen, time.Now().UTC())
+	return nil
+}
+
 func fetchInfo(deviceURL string) (*wled.Info, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
