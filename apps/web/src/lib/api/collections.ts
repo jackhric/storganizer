@@ -32,11 +32,20 @@ export async function deleteDevice(id: string) {
 
 // ---- items -----------------------------------------------------------------
 
-export async function getItems(filter?: string): Promise<ItemsResponse[]> {
-  return pb.collection("items").getFullList<ItemsResponse>({
-    sort: "name",
-    filter,
-  });
+export type ItemWithAssignmentsExpand = {
+  assignments_via_item_id?: AssignmentsResponse[];
+};
+
+export async function getItems(
+  filter?: string
+): Promise<ItemsResponse<unknown, unknown, ItemWithAssignmentsExpand>[]> {
+  return pb
+    .collection("items")
+    .getFullList<ItemsResponse<unknown, unknown, ItemWithAssignmentsExpand>>({
+      sort: "name",
+      filter,
+      expand: "assignments_via_item_id",
+    });
 }
 
 export async function getItem(id: string): Promise<ItemsResponse> {
