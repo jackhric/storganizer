@@ -1,9 +1,15 @@
 "use client";
 
+import { useState } from "react";
+import { useDraggable } from "@dnd-kit/core";
+import { GripVerticalIcon, PlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
 import { pb } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 import type { ItemsTyped } from "@/types/items";
 
 type Props = {
@@ -12,6 +18,8 @@ type Props = {
 };
 
 export function AssignmentItemList({ items, isLoading }: Props) {
+  const [formOpen, setFormOpen] = useState(false);
+
   return (
     <div className="flex flex-col lg:w-[340px] shrink-0">
       <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
@@ -19,7 +27,18 @@ export function AssignmentItemList({ items, isLoading }: Props) {
         <Badge variant="secondary" className="tabular-nums">
           {items?.length ?? 0}
         </Badge>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="ml-auto gap-1.5"
+          onClick={() => setFormOpen(true)}
+        >
+          <PlusIcon className="h-3.5 w-3.5" />
+          Add
+        </Button>
       </div>
+
+      <ItemFormDialog open={formOpen} onOpenChange={setFormOpen} />
 
       <ScrollArea className="flex-1">
         {isLoading ? (
@@ -41,7 +60,7 @@ export function AssignmentItemList({ items, isLoading }: Props) {
         ) : (
           <ul className="divide-y divide-border">
             {items.map((item) => (
-              <AssignmentItemRow key={item.id} item={item} />
+              <DraggableItemRow key={item.id} item={item} />
             ))}
           </ul>
         )}
@@ -50,13 +69,28 @@ export function AssignmentItemList({ items, isLoading }: Props) {
   );
 }
 
-function AssignmentItemRow({ item }: { item: ItemsTyped }) {
+function DraggableItemRow({ item }: { item: ItemsTyped }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `item-${item.id}`,
+    data: { itemId: item.id },
+  });
+
   const imageUrl = item.image
     ? pb.files.getURL(item, item.image, { thumb: "80x80" })
     : null;
 
   return (
-    <li className="flex items-center gap-3 px-6 py-3">
+    <li
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={cn(
+        "flex items-center gap-3 px-6 py-3 cursor-grab active:cursor-grabbing select-none touch-none",
+        "hover:bg-muted/40 transition-colors",
+        isDragging && "opacity-40"
+      )}
+    >
+      <GripVerticalIcon className="h-4 w-4 text-muted-foreground/40 shrink-0" />
       <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
         {imageUrl ? (
           <img
@@ -64,7 +98,8 @@ function AssignmentItemRow({ item }: { item: ItemsTyped }) {
             alt={item.name}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover"
+            draggable={false}
+            className="h-full w-full object-cover pointer-events-none"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">

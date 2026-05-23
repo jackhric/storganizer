@@ -83,6 +83,7 @@
   --sidebar-accent-foreground: oklch(0.12 0.003 247);
   --sidebar-border: oklch(0 0 0 / 8%);
   --sidebar-ring: oklch(0.65 0.18 54 / 60%);
+  --cell-gradient: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02));
 }
 
 /* Dark zinc theme */
@@ -118,6 +119,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 6%);
   --sidebar-ring: oklch(0.75 0.18 54 / 60%);
+  --cell-gradient: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02));
 }
 
 @layer base {

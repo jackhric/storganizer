@@ -86,8 +86,27 @@ export async function getAssignmentsByItem(
     });
 }
 
+export type AssignmentWithItemExpand = {
+  item_id?: ItemsResponse;
+};
+
+export async function getAssignmentsByDevice(
+  deviceId: string
+): Promise<AssignmentsResponse<AssignmentWithItemExpand>[]> {
+  return pb
+    .collection("assignments")
+    .getFullList<AssignmentsResponse<AssignmentWithItemExpand>>({
+      filter: `cell_id.device_id = "${deviceId}"`,
+      expand: "item_id",
+    });
+}
+
 export async function createAssignment(data: Create<"assignments">) {
   return pb.collection("assignments").create<AssignmentsResponse>(data);
+}
+
+export async function updateAssignment(id: string, data: Update<"assignments">) {
+  return pb.collection("assignments").update<AssignmentsResponse>(id, data);
 }
 
 export async function deleteAssignment(id: string) {

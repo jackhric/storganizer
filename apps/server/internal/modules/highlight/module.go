@@ -36,6 +36,8 @@ func (m *Module) RegisterRoutes(r *router.Router[*core.RequestEvent]) {
 		return e.JSON(http.StatusOK, map[string]any{"ok": true})
 	})
 
+	r.GET("/api/devices/{id}/hover-stream", handleHoverStream)
+
 	r.POST("/api/highlight/clear", func(e *core.RequestEvent) error {
 		var body struct {
 			DeviceID string `json:"device_id"`

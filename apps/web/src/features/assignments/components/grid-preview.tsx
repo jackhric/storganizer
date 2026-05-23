@@ -1,15 +1,42 @@
 "use client";
 
+import { useDroppable } from "@dnd-kit/core";
+import { motion } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { CellsResponse, DevicesResponse } from "@/lib/api/types";
+import { pb } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
+import type { Rgb } from "@/lib/color/oklch";
+import type {
+  AssignmentsResponse,
+  CellsResponse,
+  DevicesResponse,
+  ItemsResponse,
+} from "@/lib/api/types";
+import type { AssignmentWithItemExpand } from "@/lib/api/collections";
+
+type AssignmentWithItem = AssignmentsResponse<AssignmentWithItemExpand>;
 
 type Props = {
   device: DevicesResponse;
   cells: CellsResponse[] | undefined;
   isLoading?: boolean;
+  assignmentsByCellId: Map<string, AssignmentWithItem>;
+  cellColors: Map<number, Rgb>;
+  onCellHoverChange: (ledIndex: number | null) => void;
+  selectedCellId: string | null;
+  onCellSelect: (cellId: string) => void;
 };
 
-export function GridPreview({ device, cells, isLoading }: Props) {
+export function GridPreview({
+  device,
+  cells,
+  isLoading,
+  assignmentsByCellId,
+  cellColors,
+  onCellHoverChange,
+  selectedCellId,
+  onCellSelect,
+}: Props) {
   const hasGrid = device.grid_width > 0 && device.grid_height > 0;
 
   if (!hasGrid) {
@@ -23,33 +50,117 @@ export function GridPreview({ device, cells, isLoading }: Props) {
   }
 
   if (isLoading || !cells) {
-    return (
-      <div className="w-full max-w-[600px]">
-        <Skeleton
-          className="w-full rounded-md"
-          style={{ aspectRatio: `${device.grid_width} / ${device.grid_height}` }}
-        />
-      </div>
-    );
+    return <Skeleton className="h-full w-full rounded-md" />;
   }
 
   const sortedCells = [...cells].sort((a, b) => a.led_index - b.led_index);
 
   return (
     <div
-      className="grid w-full max-w-[600px] gap-1"
+      className="grid h-full w-full gap-1 max-lg:aspect-(--grid-aspect) max-lg:h-auto"
       style={{
         gridTemplateColumns: `repeat(${device.grid_width}, minmax(0, 1fr))`,
-        aspectRatio: `${device.grid_width} / ${device.grid_height}`,
-      }}
+        gridTemplateRows: `repeat(${device.grid_height}, minmax(0, 1fr))`,
+        "--grid-aspect": `${device.grid_width} / ${device.grid_height}`,
+      } as React.CSSProperties}
+      onMouseLeave={() => onCellHoverChange(null)}
     >
       {sortedCells.map((cell) => (
-        <div
+        <DroppableCell
           key={cell.id}
-          className="rounded-sm border border-border bg-muted/30"
-          title={`LED ${cell.led_index}`}
+          cell={cell}
+          assignment={assignmentsByCellId.get(cell.id)}
+          onHoverChange={onCellHoverChange}
+          color={cellColors.get(cell.led_index) ?? null}
+          isSelected={selectedCellId === cell.id}
+          onSelect={onCellSelect}
         />
       ))}
+    </div>
+  );
+}
+
+function DroppableCell({
+  cell,
+  assignment,
+  onHoverChange,
+  color,
+  isSelected,
+  onSelect,
+}: {
+  cell: CellsResponse;
+  assignment: AssignmentWithItem | undefined;
+  onHoverChange: (ledIndex: number | null) => void;
+  color: Rgb | null;
+  isSelected: boolean;
+  onSelect: (cellId: string) => void;
+}) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `cell-${cell.id}`,
+    data: { cellId: cell.id },
+  });
+
+  const item = assignment?.expand?.item_id;
+  const rgb = color ? `rgb(${color.r}, ${color.g}, ${color.b})` : null;
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      title={`LED ${cell.led_index}`}
+      onMouseEnter={() => onHoverChange(cell.led_index)}
+      onClick={() => onSelect(cell.id)}
+      whileHover={{ scale: 1.05, zIndex: 10 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 900, damping: 22, mass: 0.6 }}
+      className={cn(
+        "group relative cursor-pointer rounded-sm border transition-colors",
+        item
+          ? "border-border bg-card"
+          : "border-border bg-muted/30",
+        isOver && "ring-2 ring-primary ring-offset-1 border-primary",
+        isSelected && !isOver && "ring-2 ring-cyan-400 ring-offset-1"
+      )}
+      style={
+        rgb && !item
+          ? { backgroundColor: rgb }
+          : !item
+            ? { backgroundImage: "var(--cell-gradient)" }
+            : undefined
+      }
+    >
+      {item && <CellContent item={item} />}
+      {/* Inset ring overlay mirrors the LED color for occupied cells. */}
+      {rgb && item && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-sm"
+          style={{ boxShadow: `inset 0 0 0 3px ${rgb}` }}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+function CellContent({ item }: { item: ItemsResponse }) {
+  const imageUrl = item.image
+    ? pb.files.getURL(item, item.image, { thumb: "400x400" })
+    : null;
+
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={item.name}
+        draggable={false}
+        className="absolute inset-0 h-full w-full object-cover rounded-sm pointer-events-none"
+      />
+    );
+  }
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <span className="text-[10px] font-bold text-muted-foreground/60 select-none">
+        {item.name.slice(0, 2).toUpperCase()}
+      </span>
     </div>
   );
 }
