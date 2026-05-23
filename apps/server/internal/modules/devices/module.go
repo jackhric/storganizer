@@ -47,6 +47,7 @@ func (m *Module) RegisterHooks(pbApp core.App) {
 // RegisterRoutes adds:
 //
 //	POST /api/devices/:id/sync — pull LED info from WLED, update the device record.
+//	POST /api/devices/refresh  — run the heartbeat for all devices on demand.
 func (m *Module) RegisterRoutes(r *router.Router[*core.RequestEvent]) {
 	r.POST("/api/devices/{id}/sync", func(e *core.RequestEvent) error {
 		id := e.Request.PathValue("id")
@@ -62,5 +63,10 @@ func (m *Module) RegisterRoutes(r *router.Router[*core.RequestEvent]) {
 			"grid_width":  device.GetInt(deviceconsts.FieldGridWidth),
 			"grid_height": device.GetInt(deviceconsts.FieldGridHeight),
 		})
+	})
+
+	r.POST("/api/devices/refresh", func(e *core.RequestEvent) error {
+		RunHeartbeat(e.App)
+		return e.NoContent(http.StatusNoContent)
 	})
 }

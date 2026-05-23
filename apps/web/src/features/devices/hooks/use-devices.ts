@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDevices, createDevice, updateDevice, deleteDevice } from "@/lib/api";
-import { syncDevice, syncDeviceCells, highlightItems, clearHighlight } from "@/lib/api/custom-routes";
+import { syncDevice, syncDeviceCells, highlightItems, clearHighlight, refreshDevices } from "@/lib/api/custom-routes";
 import type { HighlightColor } from "@/lib/api/custom-routes";
 import { pb } from "@/lib/api/client";
 import type { DevicesResponse } from "@/lib/api/types";
@@ -42,6 +42,12 @@ export function useSyncDevice() {
   return useMutation({
     mutationFn: (deviceId: string) => syncDevice(deviceId),
     onSuccess: () => qc.invalidateQueries({ queryKey: deviceKeys.all }),
+  });
+}
+
+export function useRefreshDevices() {
+  return useMutation({
+    mutationFn: () => refreshDevices(),
   });
 }
 

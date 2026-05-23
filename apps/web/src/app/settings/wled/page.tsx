@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { PlusIcon, PlugIcon, ChevronRightIcon, LayersIcon, GridIcon } from "lucide-react";
+import { PlusIcon, PlugIcon, ChevronRightIcon, LayersIcon, GridIcon, RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddDeviceDialog } from "@/features/devices/components/add-device-dialog";
-import { useDevices, useDeleteDevice, useUpdateDevice } from "@/features/devices/hooks/use-devices";
+import { useDevices, useDeleteDevice, useUpdateDevice, useRefreshDevices } from "@/features/devices/hooks/use-devices";
 import type { DevicesResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import {
@@ -186,6 +186,7 @@ export default function WledSettingsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: devices = [] } = useDevices();
+  const { mutate: refresh, isPending: isRefreshing } = useRefreshDevices();
 
   const selected = devices.find((d) => d.id === selectedId) ?? null;
 
@@ -203,6 +204,16 @@ export default function WledSettingsPage() {
                 {devices.length}
               </Badge>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => refresh()}
+              disabled={isRefreshing || devices.length === 0}
+              aria-label="Refresh devices"
+              title="Refresh devices"
+            >
+              <RefreshCwIcon className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+            </Button>
           </div>
 
           <ScrollArea className="flex-1">

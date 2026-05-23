@@ -16,6 +16,10 @@ export async function syncDeviceCells(deviceId: string) {
   );
 }
 
+export async function refreshDevices() {
+  return pb.send<void>("/api/devices/refresh", { method: "POST" });
+}
+
 // ---- highlight -------------------------------------------------------------
 
 export type HighlightColor = { r: number; g: number; b: number };
