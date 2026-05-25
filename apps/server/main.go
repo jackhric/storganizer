@@ -7,8 +7,8 @@ import (
 	"github.com/storganizer/server/internal/modules/assignments"
 	"github.com/storganizer/server/internal/modules/cells"
 	"github.com/storganizer/server/internal/modules/devices"
-	"github.com/storganizer/server/internal/modules/highlight"
 	"github.com/storganizer/server/internal/modules/items"
+	"github.com/storganizer/server/internal/modules/warls"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
@@ -27,7 +27,7 @@ func main() {
 		items.New(),
 		cells.New(),
 		assignments.New(),
-		highlight.New(),
+		warls.New(),
 		// Add new modules here.
 	); err != nil {
 		log.Fatal(err)

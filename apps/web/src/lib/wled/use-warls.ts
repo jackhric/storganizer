@@ -4,141 +4,117 @@ import { useEffect, useRef } from "react";
 import { pb } from "@/lib/api/client";
 import type { Rgb } from "@/lib/color/oklch";
 
+// Throttle send rate to ~30 fps. The backend handles WARLS keepalive itself
+// (re-sending the last frame to WLED every ~300ms), so this throttle only
+// shapes the frontend → backend stream — coalescing rapid UI updates without
+// flooding the WebSocket.
 const THROTTLE_MS = 33;
-// WLED's WARLS realtime timeout is ~1s. Re-send the last frame at this cadence
-// when no new frames arrive, so the strip holds its state indefinitely.
-const KEEPALIVE_MS = 750;
 
 export type WarlsDeviceFrame = Map<number, Rgb>;
 export type WarlsFrame = Map<string, WarlsDeviceFrame>;
 
-type DeviceSocket = {
-  ws: WebSocket;
-  flushTimer: ReturnType<typeof setTimeout> | null;
-  keepaliveTimer: ReturnType<typeof setInterval> | null;
-  pending: WarlsDeviceFrame | null;
-  lastFrame: WarlsDeviceFrame;
-  lastSentAt: number;
-};
-
-const EMPTY_DEVICE_FRAME: WarlsDeviceFrame = new Map();
+type WireLed = { idx: number; r: number; g: number; b: number };
+type SetMessage = { type: "set"; frames: Record<string, WireLed[]> };
 
 /**
- * Streams the desired LED state to one or more WLED devices over WARLS UDP via
- * the backend hover-stream WebSocket. The outer map is keyed by device id;
- * each inner map holds the LED indices that should be lit on that device.
+ * Streams the desired LED state to one or more WLED devices via a single
+ * backend WebSocket session. The backend owns frame keepalive and clears any
+ * device this session touched on disconnect — so the hook itself stays
+ * stateless beyond the socket and a small send-throttle.
  *
- * A device that drops out of the outer map (or whose inner map becomes empty)
- * has its socket sent a final empty frame and then closed — WLED's realtime
- * timeout restores the previous effect ~1s later.
+ * The outer map is keyed by device id; each inner map holds the LED indices
+ * that should be lit on that device. Devices that drop out of the outer map
+ * (or whose inner map is empty) are cleared on the next send.
  *
- * Pass `null` to silence and disconnect everything.
+ * Pass `null` to clear every device this hook has touched and close the
+ * socket. Last write wins across sessions — another tab (or a future
+ * integration) setting the same device will replace this hook's frame.
  */
 export function useWarls(frame: WarlsFrame | null): void {
-  const socketsRef = useRef<Map<string, DeviceSocket>>(new Map());
+  const wsRef = useRef<WebSocket | null>(null);
+  const pendingRef = useRef<WarlsFrame | null>(null);
+  const lastSentAtRef = useRef(0);
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const frameRef = useRef<WarlsFrame | null>(frame);
-  frameRef.current = frame;
-
+  // Open the socket once per consumer lifetime. The session is identified
+  // purely by the connection itself.
   useEffect(() => {
-    const sockets = socketsRef.current;
-    const desired = frame ?? new Map<string, WarlsDeviceFrame>();
+    const wsUrl = pb.baseURL.replace(/^http/, "ws") + "/api/warls/stream";
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
-    for (const deviceId of sockets.keys()) {
-      if (!desired.has(deviceId)) closeSocket(sockets, deviceId);
-    }
+    ws.addEventListener("open", () => {
+      if (pendingRef.current !== null) flushNow(ws, pendingRef.current, lastSentAtRef);
+      pendingRef.current = null;
+    });
 
-    for (const [deviceId, deviceFrame] of desired) {
-      let entry = sockets.get(deviceId);
-      if (!entry) entry = openSocket(sockets, deviceId);
-      scheduleSend(entry, deviceFrame);
-    }
-  }, [frame]);
-
-  useEffect(() => {
-    const sockets = socketsRef.current;
     return () => {
-      for (const deviceId of Array.from(sockets.keys())) {
-        closeSocket(sockets, deviceId);
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = null;
+      pendingRef.current = null;
+      wsRef.current = null;
+      // Best-effort empty frame so the backend can drop our claims even if
+      // it's slow to notice the close.
+      if (ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({ type: "set", frames: {} } satisfies SetMessage));
+        } catch {
+          // socket gone
+        }
       }
+      ws.close();
     };
   }, []);
-}
 
-function openSocket(sockets: Map<string, DeviceSocket>, deviceId: string): DeviceSocket {
-  const wsUrl = pb.baseURL.replace(/^http/, "ws") + `/api/devices/${deviceId}/hover-stream`;
-  const ws = new WebSocket(wsUrl);
-  const entry: DeviceSocket = {
-    ws,
-    flushTimer: null,
-    keepaliveTimer: null,
-    pending: null,
-    lastFrame: EMPTY_DEVICE_FRAME,
-    lastSentAt: 0,
-  };
-  sockets.set(deviceId, entry);
-
-  ws.addEventListener("open", () => {
-    if (entry.pending) flushNow(entry);
-  });
-  entry.keepaliveTimer = setInterval(() => {
-    if (entry.lastFrame.size === 0) return;
-    if (entry.pending !== null) return;
-    if (performance.now() - entry.lastSentAt < KEEPALIVE_MS) return;
-    entry.pending = entry.lastFrame;
-    flushNow(entry);
-  }, KEEPALIVE_MS);
-  return entry;
-}
-
-function closeSocket(sockets: Map<string, DeviceSocket>, deviceId: string): void {
-  const entry = sockets.get(deviceId);
-  if (!entry) return;
-  if (entry.flushTimer) clearTimeout(entry.flushTimer);
-  if (entry.keepaliveTimer) clearInterval(entry.keepaliveTimer);
-  entry.flushTimer = null;
-  entry.keepaliveTimer = null;
-  entry.pending = null;
-  if (entry.ws.readyState === WebSocket.OPEN) {
-    try {
-      entry.ws.send(JSON.stringify({ type: "frame", leds: [] }));
-    } catch {
-      // socket gone
+  useEffect(() => {
+    const ws = wsRef.current;
+    const desired = frame ?? new Map<string, WarlsDeviceFrame>();
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      // Queue for the open handler.
+      pendingRef.current = desired;
+      return;
     }
-  }
-  entry.ws.close();
-  sockets.delete(deviceId);
-}
 
-function scheduleSend(entry: DeviceSocket, deviceFrame: WarlsDeviceFrame): void {
-  entry.pending = deviceFrame;
-  const elapsed = performance.now() - entry.lastSentAt;
-  if (elapsed >= THROTTLE_MS) {
-    if (entry.flushTimer) {
-      clearTimeout(entry.flushTimer);
-      entry.flushTimer = null;
+    const elapsed = performance.now() - lastSentAtRef.current;
+    if (elapsed >= THROTTLE_MS) {
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      flushNow(ws, desired, lastSentAtRef);
+    } else {
+      pendingRef.current = desired;
+      if (!flushTimerRef.current) {
+        flushTimerRef.current = setTimeout(() => {
+          flushTimerRef.current = null;
+          const target = pendingRef.current;
+          pendingRef.current = null;
+          if (target && ws.readyState === WebSocket.OPEN) {
+            flushNow(ws, target, lastSentAtRef);
+          }
+        }, THROTTLE_MS - elapsed);
+      }
     }
-    flushNow(entry);
-  } else if (!entry.flushTimer) {
-    entry.flushTimer = setTimeout(() => flushNow(entry), THROTTLE_MS - elapsed);
-  }
+  }, [frame]);
 }
 
-function flushNow(entry: DeviceSocket): void {
-  const target = entry.pending ?? EMPTY_DEVICE_FRAME;
-  entry.pending = null;
-  entry.flushTimer = null;
-  entry.lastFrame = target;
-  entry.lastSentAt = performance.now();
-  if (entry.ws.readyState !== WebSocket.OPEN) return;
-  const leds = Array.from(target.entries()).map(([idx, c]) => ({
-    idx,
-    r: c.r,
-    g: c.g,
-    b: c.b,
-  }));
+function flushNow(
+  ws: WebSocket,
+  frame: WarlsFrame,
+  lastSentAtRef: { current: number }
+): void {
+  const frames: Record<string, WireLed[]> = {};
+  for (const [deviceId, deviceFrame] of frame) {
+    if (deviceFrame.size === 0) continue;
+    const leds: WireLed[] = [];
+    for (const [idx, c] of deviceFrame) {
+      leds.push({ idx, r: c.r, g: c.g, b: c.b });
+    }
+    frames[deviceId] = leds;
+  }
   try {
-    entry.ws.send(JSON.stringify({ type: "frame", leds }));
+    ws.send(JSON.stringify({ type: "set", frames } satisfies SetMessage));
+    lastSentAtRef.current = performance.now();
   } catch {
     // socket gone
   }
