@@ -1,7 +1,13 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createAssignment, deleteAssignment, getAssignmentsByDevice, updateAssignment } from "@/lib/api";
+import {
+  createAssignment,
+  deleteAssignment,
+  getAssignmentsByDevice,
+  moveAssignment,
+  updateAssignment,
+} from "@/lib/api";
 import type { Update } from "@/lib/api";
 import { itemKeys } from "@/features/items/hooks/use-items";
 
@@ -46,6 +52,18 @@ export function useDeleteAssignment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAssignment(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: assignmentKeys.all });
+      qc.invalidateQueries({ queryKey: itemKeys.all });
+    },
+  });
+}
+
+export function useMoveAssignment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fromCellId, toCellId }: { fromCellId: string; toCellId: string }) =>
+      moveAssignment(fromCellId, toCellId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: assignmentKeys.all });
       qc.invalidateQueries({ queryKey: itemKeys.all });

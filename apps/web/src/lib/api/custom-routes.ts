@@ -42,3 +42,13 @@ export async function clearHighlight(deviceId?: string) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+// ---- assignments -----------------------------------------------------------
+
+export async function moveAssignment(fromCellId: string, toCellId: string) {
+  return pb.send<void>("/api/assignments/move", {
+    method: "POST",
+    body: JSON.stringify({ from_cell_id: fromCellId, to_cell_id: toCellId }),
+    headers: { "Content-Type": "application/json" },
+  });
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useDroppable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { motion } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { pb } from "@/lib/api/client";
@@ -95,17 +95,36 @@ function DroppableCell({
   isSelected: boolean;
   onSelect: (cellId: string) => void;
 }) {
-  const { isOver, setNodeRef } = useDroppable({
+  const item = assignment?.expand?.item_id;
+
+  const { isOver, setNodeRef: setDropRef } = useDroppable({
     id: `cell-${cell.id}`,
     data: { cellId: cell.id },
   });
 
-  const item = assignment?.expand?.item_id;
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    isDragging,
+  } = useDraggable({
+    id: `cell-drag-${cell.id}`,
+    data: { fromCellId: cell.id, itemId: item?.id },
+    disabled: !item,
+  });
+
+  const setNodeRef = (node: HTMLDivElement | null) => {
+    setDropRef(node);
+    setDragRef(node);
+  };
+
   const rgb = color ? `rgb(${color.r}, ${color.g}, ${color.b})` : null;
 
   return (
     <motion.div
       ref={setNodeRef}
+      {...(item ? listeners : {})}
+      {...(item ? attributes : {})}
       title={`LED ${cell.led_index}`}
       onMouseEnter={() => onHoverChange(cell.led_index)}
       onClick={() => onSelect(cell.id)}
@@ -113,12 +132,14 @@ function DroppableCell({
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 900, damping: 22, mass: 0.6 }}
       className={cn(
-        "group relative cursor-pointer rounded-sm border transition-colors",
+        "group relative rounded-sm border transition-colors select-none touch-none",
+        item ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         item
           ? "border-border bg-card"
           : "border-border bg-muted/30",
         isOver && "ring-2 ring-primary ring-offset-1 border-primary",
-        isSelected && !isOver && "ring-2 ring-cyan-400 ring-offset-1"
+        isSelected && !isOver && "ring-2 ring-cyan-400 ring-offset-1",
+        isDragging && "opacity-40"
       )}
       style={
         rgb && !item
@@ -146,21 +167,37 @@ function CellContent({ item }: { item: ItemsResponse }) {
     ? pb.files.getURL(item, item.image, { thumb: "400x400" })
     : null;
 
-  if (imageUrl) {
-    return (
-      <img
-        src={imageUrl}
-        alt={item.name}
-        draggable={false}
-        className="absolute inset-0 h-full w-full object-cover rounded-sm pointer-events-none"
-      />
-    );
-  }
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      <span className="text-[10px] font-bold text-muted-foreground/60 select-none">
-        {item.name.slice(0, 2).toUpperCase()}
-      </span>
-    </div>
+    <>
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={item.name}
+          draggable={false}
+          className="absolute inset-0 h-full w-full object-cover rounded-sm pointer-events-none"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[10px] font-bold text-muted-foreground/60 select-none">
+            {item.name.slice(0, 2).toUpperCase()}
+          </span>
+        </div>
+      )}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 bottom-0 px-1 pt-3 pb-0.5 rounded-b-sm",
+          imageUrl && "bg-linear-to-t from-black/75 via-black/40 to-transparent"
+        )}
+      >
+        <p
+          className={cn(
+            "truncate text-center text-[10px] font-medium leading-tight select-none mb-1",
+            imageUrl ? "text-white" : "text-foreground/80"
+          )}
+        >
+          {item.name}
+        </p>
+      </div>
+    </>
   );
 }

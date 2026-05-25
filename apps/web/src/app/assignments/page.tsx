@@ -13,6 +13,7 @@ import {
   useAssignmentsByDevice,
   useCreateAssignment,
   useDeleteAssignment,
+  useMoveAssignment,
   useUpdateAssignment,
 } from "@/features/assignments/hooks/use-assignments";
 import { useDevices } from "@/features/devices/hooks/use-devices";
@@ -23,6 +24,7 @@ import type { ItemsTyped } from "@/types/items";
 const COLOR_WHITE: Rgb = { r: 255, g: 255, b: 255 };
 const COLOR_ORANGE: Rgb = { r: 255, g: 140, b: 0 };
 const COLOR_GREEN: Rgb = { r: 0, g: 200, b: 0 };
+const COLOR_PURPLE: Rgb = { r: 180, g: 60, b: 220 };
 
 // Selection cyan breathes between SELECTION_MIN and SELECTION_MAX over a 2s
 // period. The frontend recomputes the phase every frame; the WLED sender
@@ -47,8 +49,10 @@ const snapCenterToCursor: Modifier = ({ activatorEvent, draggingNodeRect, transf
 export default function AssignmentsPage() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [activeItem, setActiveItem] = useState<ItemsTyped | null>(null);
+  const [dragFromCellId, setDragFromCellId] = useState<string | null>(null);
   const [hoveredLed, setHoveredLed] = useState<number | null>(null);
   const [dragHoveredLed, setDragHoveredLed] = useState<number | null>(null);
+  const [dragOverCellId, setDragOverCellId] = useState<string | null>(null);
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [breathPhase, setBreathPhase] = useState(0);
 
@@ -60,6 +64,7 @@ export default function AssignmentsPage() {
   const createAssignment = useCreateAssignment();
   const updateAssignment = useUpdateAssignment();
   const deleteAssignment = useDeleteAssignment();
+  const moveAssignmentMutation = useMoveAssignment();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
@@ -105,11 +110,18 @@ export default function AssignmentsPage() {
     if (!assignments) return [] as number[];
     const out: number[] = [];
     for (const a of assignments) {
+      if (a.cell_id === dragFromCellId) continue;
       const led = ledIndexByCellId.get(a.cell_id);
       if (led !== undefined) out.push(led);
     }
     return out;
-  }, [assignments, ledIndexByCellId]);
+  }, [assignments, ledIndexByCellId, dragFromCellId]);
+
+  const isSwapTarget =
+    dragFromCellId !== null &&
+    dragOverCellId !== null &&
+    dragOverCellId !== dragFromCellId &&
+    assignmentsByCellId.has(dragOverCellId);
 
   const selectedCell = useMemo(() => {
     if (!selectedCellId || !cells) return null;
@@ -151,7 +163,9 @@ export default function AssignmentsPage() {
     const m = new Map<number, Rgb>();
     if (isDragging) {
       for (const idx of occupiedLeds) m.set(idx, COLOR_ORANGE);
-      if (dragHoveredLed !== null) m.set(dragHoveredLed, COLOR_GREEN);
+      if (dragHoveredLed !== null) {
+        m.set(dragHoveredLed, isSwapTarget ? COLOR_PURPLE : COLOR_GREEN);
+      }
     } else if (hoveredLed !== null) {
       m.set(hoveredLed, COLOR_WHITE);
     } else if (selectionLed !== null) {
@@ -165,31 +179,44 @@ export default function AssignmentsPage() {
       });
     }
     return m;
-  }, [isDragging, occupiedLeds, hoveredLed, dragHoveredLed, selectionLed, breathPhase]);
+  }, [isDragging, occupiedLeds, hoveredLed, dragHoveredLed, isSwapTarget, selectionLed, breathPhase]);
 
   useWledFrameSender(selectedDeviceId, frame);
 
   function handleDragStart(event: DragStartEvent) {
     const itemId = event.active.data.current?.itemId as string | undefined;
+    const fromCellId = event.active.data.current?.fromCellId as string | undefined;
     const found = (items as ItemsTyped[] | undefined)?.find((i) => i.id === itemId) ?? null;
     setActiveItem(found);
+    setDragFromCellId(fromCellId ?? null);
     setHoveredLed(null);
   }
 
   function handleDragOver(event: DragOverEvent) {
     const cellId = event.over?.data.current?.cellId as string | undefined;
+    setDragOverCellId(cellId ?? null);
     setDragHoveredLed(cellId ? ledIndexByCellId.get(cellId) ?? null : null);
   }
 
   async function handleDragEnd(event: DragEndEvent) {
     setActiveItem(null);
+    setDragFromCellId(null);
+    setDragOverCellId(null);
     setDragHoveredLed(null);
     const { active, over } = event;
     if (!over) return;
     const itemId = active.data.current?.itemId as string | undefined;
+    const fromCellId = active.data.current?.fromCellId as string | undefined;
     const cellId = over.data.current?.cellId as string | undefined;
-    if (!itemId || !cellId) return;
+    if (!cellId) return;
 
+    if (fromCellId) {
+      if (fromCellId === cellId) return;
+      await moveAssignmentMutation.mutateAsync({ fromCellId, toCellId: cellId });
+      return;
+    }
+
+    if (!itemId) return;
     const existing = assignmentsByCellId.get(cellId);
     if (existing) {
       await deleteAssignment.mutateAsync(existing.id);
@@ -199,6 +226,8 @@ export default function AssignmentsPage() {
 
   function handleDragCancel() {
     setActiveItem(null);
+    setDragFromCellId(null);
+    setDragOverCellId(null);
     setDragHoveredLed(null);
   }
 
