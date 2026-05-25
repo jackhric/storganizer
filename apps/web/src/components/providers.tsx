@@ -7,6 +7,7 @@ import { ThemeProvider as NextThemeProvider, type ThemeProviderProps } from "nex
 const ThemeProvider = NextThemeProvider as React.ComponentType<ThemeProviderProps & { children?: React.ReactNode }>;
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AccentProvider } from "@/components/accent-provider";
+import { FindProvider } from "@/components/find-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -25,6 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <AccentProvider />
       <QueryClientProvider client={queryClient}>
+        <FindProvider />
         <TooltipProvider>{children}</TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>

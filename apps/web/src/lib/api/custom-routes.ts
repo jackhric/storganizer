@@ -20,29 +20,6 @@ export async function refreshDevices() {
   return pb.send<void>("/api/devices/refresh", { method: "POST" });
 }
 
-// ---- highlight -------------------------------------------------------------
-
-export type HighlightColor = { r: number; g: number; b: number };
-
-export async function highlightItems(
-  itemIds: string[],
-  color: HighlightColor
-) {
-  return pb.send<void>("/api/highlight", {
-    method: "POST",
-    body: JSON.stringify({ item_ids: itemIds, color }),
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-export async function clearHighlight(deviceId?: string) {
-  return pb.send<void>("/api/highlight/clear", {
-    method: "POST",
-    body: deviceId ? JSON.stringify({ device_id: deviceId }) : undefined,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
 // ---- assignments -----------------------------------------------------------
 
 export async function moveAssignment(fromCellId: string, toCellId: string) {

@@ -9,22 +9,25 @@ import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
 import { DeleteItemDialog } from "@/features/items/components/delete-item-dialog";
 import { DeviceStatusBar } from "@/features/items/components/device-status-bar";
 import { useItems } from "@/features/items/hooks/use-items";
-import { useDevices, useHighlightItems, useClearHighlight } from "@/features/devices/hooks/use-devices";
+import { useDevices } from "@/features/devices/hooks/use-devices";
+import { useFindStore } from "@/lib/stores/find";
+import type { WarlsFrame } from "@/lib/wled/use-warls";
+import type { Rgb } from "@/lib/color/oklch";
 import type { ItemsTyped } from "@/types/items";
 
-const HIGHLIGHT_COLOR = { r: 255, g: 140, b: 0 };
+const HIGHLIGHT_COLOR: Rgb = { r: 255, g: 140, b: 0 };
 
 export default function HomePage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [highlightingId, setHighlightingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ItemsTyped | undefined>(undefined);
   const [deletingItem, setDeletingItem] = useState<ItemsTyped | null>(null);
 
   const { data: items, isLoading: itemsLoading } = useItems();
   const { data: devices } = useDevices();
-  const highlightMutation = useHighlightItems();
-  const clearMutation = useClearHighlight();
+  const findItemId = useFindStore((s) => s.itemId);
+  const setFind = useFindStore((s) => s.setFind);
+  const clearFind = useFindStore((s) => s.clearFind);
 
   const allTags = useMemo(() => {
     if (!items) return [];
@@ -43,13 +46,27 @@ export default function HomePage() {
     return items.filter((item) => Array.isArray(item.tags) && (item.tags as string[]).includes(activeTag));
   }, [items, activeTag]);
 
-  async function handleHighlight(item: ItemsTyped) {
-    setHighlightingId(item.id);
-    try {
-      await highlightMutation.mutateAsync({ itemIds: [item.id], color: HIGHLIGHT_COLOR });
-    } finally {
-      setHighlightingId(null);
+  function handleFind(item: ItemsTyped) {
+    if (findItemId === item.id) {
+      clearFind();
+      return;
     }
+    const frame: WarlsFrame = new Map();
+    for (const a of item.expand?.assignments_via_item_id ?? []) {
+      const cell = a.expand?.cell_id;
+      if (!cell) continue;
+      let perDevice = frame.get(cell.device_id);
+      if (!perDevice) {
+        perDevice = new Map();
+        frame.set(cell.device_id, perDevice);
+      }
+      perDevice.set(cell.led_index, HIGHLIGHT_COLOR);
+    }
+    if (frame.size === 0) {
+      clearFind();
+      return;
+    }
+    setFind(item.id, frame);
   }
 
   function handleEdit(item: ItemsTyped) {
@@ -78,8 +95,8 @@ export default function HomePage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => clearMutation.mutateAsync(undefined)}
-            disabled={clearMutation.isPending}
+            onClick={clearFind}
+            disabled={findItemId === null}
             className="gap-1.5 text-muted-foreground hover:text-foreground"
           >
             <ZapOffIcon className="h-3.5 w-3.5" />
@@ -147,8 +164,8 @@ export default function HomePage() {
             <ItemCard
               key={item.id}
               item={item as ItemsTyped}
-              onHighlight={handleHighlight}
-              isHighlighting={highlightingId === item.id}
+              onHighlight={handleFind}
+              isHighlighting={findItemId === item.id}
               onEdit={handleEdit}
               onDelete={setDeletingItem}
             />

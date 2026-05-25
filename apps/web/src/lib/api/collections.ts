@@ -32,8 +32,12 @@ export async function deleteDevice(id: string) {
 
 // ---- items -----------------------------------------------------------------
 
+export type AssignmentWithCellExpand = {
+  cell_id?: CellsResponse;
+};
+
 export type ItemWithAssignmentsExpand = {
-  assignments_via_item_id?: AssignmentsResponse[];
+  assignments_via_item_id?: AssignmentsResponse<AssignmentWithCellExpand>[];
 };
 
 export async function getItems(
@@ -44,7 +48,7 @@ export async function getItems(
     .getFullList<ItemsResponse<unknown, unknown, ItemWithAssignmentsExpand>>({
       sort: "name",
       filter,
-      expand: "assignments_via_item_id",
+      expand: "assignments_via_item_id.cell_id",
     });
 }
 

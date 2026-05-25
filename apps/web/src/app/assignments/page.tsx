@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragOverEvent, type DragStartEvent, type Modifier } from "@dnd-kit/core";
-import { useWledFrameSender } from "@/features/assignments/hooks/use-wled-frame-sender";
+import { useWarls, type WarlsFrame } from "@/lib/wled/use-warls";
 import { pb } from "@/lib/api/client";
 import { AssignmentItemList } from "@/features/assignments/components/assignment-item-list";
 import { CellInfoPane } from "@/features/assignments/components/cell-info-pane";
@@ -181,7 +181,13 @@ export default function AssignmentsPage() {
     return m;
   }, [isDragging, occupiedLeds, hoveredLed, dragHoveredLed, isSwapTarget, selectionLed, breathPhase]);
 
-  useWledFrameSender(selectedDeviceId, frame);
+  const warlsFrame = useMemo<WarlsFrame | null>(() => {
+    if (!selectedDeviceId) return null;
+    const m: WarlsFrame = new Map();
+    m.set(selectedDeviceId, frame);
+    return m;
+  }, [selectedDeviceId, frame]);
+  useWarls(warlsFrame);
 
   function handleDragStart(event: DragStartEvent) {
     const itemId = event.active.data.current?.itemId as string | undefined;

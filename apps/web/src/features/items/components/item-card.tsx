@@ -1,6 +1,6 @@
 "use client";
 
-import { ZapIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, AlertTriangleIcon } from "lucide-react";
+import { ZapIcon, ZapOffIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, AlertTriangleIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,10 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
   const hasAssignment = (item.expand?.assignments_via_item_id?.length ?? 0) > 0;
 
   return (
-    <Card className="group relative overflow-hidden border-border/60 bg-card transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+    <Card className={cn(
+      "group relative overflow-hidden border-border/60 bg-card transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
+      isHighlighting && "border-primary/70 shadow-lg shadow-primary/20"
+    )}>
       {/* Image / placeholder */}
       <div className="relative aspect-square overflow-hidden bg-muted">
         {imageUrl ? (
@@ -46,15 +49,17 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
         )}
 
         {/* Hover action */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-background/40 backdrop-blur-[2px]">
+        <div className={cn(
+          "absolute inset-0 flex items-center justify-center transition-opacity duration-200 bg-background/40 backdrop-blur-[2px]",
+          isHighlighting ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )}>
           <Button
             size="sm"
             onClick={() => onHighlight?.(item)}
-            disabled={isHighlighting}
             className="gap-1.5 shadow-lg"
           >
-            <ZapIcon className="h-3.5 w-3.5" />
-            Find
+            {isHighlighting ? <ZapOffIcon className="h-3.5 w-3.5" /> : <ZapIcon className="h-3.5 w-3.5" />}
+            {isHighlighting ? "Finding" : "Find"}
           </Button>
         </div>
       </div>
