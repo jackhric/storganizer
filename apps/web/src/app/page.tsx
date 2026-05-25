@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { PlusIcon, ZapOffIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +25,24 @@ export default function HomePage() {
 
   const { data: items, isLoading: itemsLoading } = useItems();
   const { data: devices } = useDevices();
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(0);
+
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const update = () => {
+      const cols = window
+        .getComputedStyle(el)
+        .gridTemplateColumns.split(" ")
+        .filter(Boolean).length;
+      setColumns(cols);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [itemsLoading]);
   const findItemId = useFindStore((s) => s.itemId);
   const setFind = useFindStore((s) => s.setFind);
   const clearFind = useFindStore((s) => s.clearFind);
@@ -139,11 +157,7 @@ export default function HomePage() {
       {itemsLoading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="aspect-square rounded-lg" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
+            <Skeleton key={i} className="aspect-square rounded-xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -159,7 +173,10 @@ export default function HomePage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div
+          ref={gridRef}
+          className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+        >
           {filtered.map((item) => (
             <ItemCard
               key={item.id}
@@ -170,6 +187,14 @@ export default function HomePage() {
               onDelete={setDeletingItem}
             />
           ))}
+          {columns > 0 &&
+            filtered.length % columns !== 0 &&
+            Array.from({ length: columns - (filtered.length % columns) }).map((_, i) => (
+              <Skeleton
+                key={`placeholder-${i}`}
+                className="aspect-square rounded-xl opacity-40"
+              />
+            ))}
         </div>
       )}
 
