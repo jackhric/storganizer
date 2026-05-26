@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { ZapIcon, ZapOffIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, AlertTriangleIcon, SearchIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { pb } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import type { ItemsTyped } from "@/types/items";
+
+// --- Spring tuning -----------------------------------------------------------
+// Adjust these to dial in the click/hover feel.
+const HOVER_SCALE = 1.01;
+const HOVER_LIFT_Y = -.5;
+const TAP_SCALE = 0.98;
+const SPRING = { type: "spring" as const, stiffness: 800, damping: 22, mass: 0.7 };
+// -----------------------------------------------------------------------------
 
 type Props = {
   item: ItemsTyped;
@@ -26,7 +35,12 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
   const hasAssignment = (item.expand?.assignments_via_item_id?.length ?? 0) > 0;
 
   return (
-    <div className="relative">
+    <motion.div
+      className="relative"
+      whileHover={{ scale: HOVER_SCALE, y: HOVER_LIFT_Y }}
+      whileTap={{ scale: TAP_SCALE }}
+      transition={SPRING}
+    >
       {/* Marching-ants outline (while finding) — sits outside the card */}
       {isHighlighting && (
         <svg
@@ -51,8 +65,9 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
         </svg>
       )}
     <Card
+      onClick={() => onHighlight?.(item)}
       className={cn(
-        "group relative aspect-square overflow-hidden border-border/60 bg-muted p-0 transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
+        "group relative aspect-square cursor-pointer overflow-hidden border-border/60 bg-muted p-0 transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
       )}
     >
       {/* Background: image or initials */}
@@ -62,7 +77,7 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
           alt={item.name}
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -93,7 +108,10 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
           size="icon"
           variant="ghost"
           className="h-7 w-7 bg-background/70 backdrop-blur-sm hover:bg-background"
-          onClick={() => onEdit?.(item)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit?.(item);
+          }}
           aria-label="Edit item"
         >
           <PencilIcon className="h-3.5 w-3.5" />
@@ -102,7 +120,10 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
           size="icon"
           variant="ghost"
           className="h-7 w-7 bg-background/70 backdrop-blur-sm hover:bg-background hover:text-destructive"
-          onClick={() => onDelete?.(item)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete?.(item);
+          }}
           aria-label="Delete item"
         >
           <Trash2Icon className="h-3.5 w-3.5" />
@@ -115,6 +136,7 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
           <Tooltip>
             <TooltipTrigger
               aria-label="Not assigned to any location"
+              onClick={(e) => e.stopPropagation()}
               className="flex h-7 w-7 items-center justify-center rounded-md bg-background/70 text-amber-500 backdrop-blur-sm"
             >
               <AlertTriangleIcon className="h-3.5 w-3.5" />
@@ -124,23 +146,16 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
         </div>
       )}
 
-      {/* Centered Find button (hover or active) */}
-      <div
-        className={cn(
-          "absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-200",
-          isHighlighting
-            ? "opacity-100"
-            : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
-        )}
-      >
-        <Button
-          size="sm"
-          onClick={() => onHighlight?.(item)}
-          className="gap-1.5 shadow-lg"
-        >
-          {isHighlighting ? <ZapOffIcon className="h-3.5 w-3.5" /> : <ZapIcon className="h-3.5 w-3.5" />}
-          {isHighlighting ? "Finding" : "Find"}
-        </Button>
+      {/* Click-to-find hint (hover only) — top-left */}
+      <div className="pointer-events-none absolute left-2 top-2 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="flex items-center gap-1.5 rounded-full bg-background/85 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm">
+          {isHighlighting ? (
+            <ZapOffIcon className="h-3.5 w-3.5" />
+          ) : (
+            <ZapIcon className="h-3.5 w-3.5" />
+          )}
+          {isHighlighting ? "Click to clear" : "Click to find"}
+        </div>
       </div>
 
       {/* Searching indicator (bottom-right) */}
@@ -188,6 +203,6 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
         )}
       </div>
     </Card>
-    </div>
+    </motion.div>
   );
 }
