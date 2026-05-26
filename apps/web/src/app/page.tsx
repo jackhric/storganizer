@@ -8,6 +8,7 @@ import { ItemCard } from "@/features/items/components/item-card";
 import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
 import { DeleteItemDialog } from "@/features/items/components/delete-item-dialog";
 import { DeviceStatusBar } from "@/features/items/components/device-status-bar";
+import { SelectionBar } from "@/features/items/components/selection-bar";
 import { useItems } from "@/features/items/hooks/use-items";
 import { useDevices } from "@/features/devices/hooks/use-devices";
 import { useFindStore } from "@/lib/stores/find";
@@ -43,9 +44,10 @@ export default function HomePage() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [itemsLoading]);
-  const findItemId = useFindStore((s) => s.itemId);
-  const setFind = useFindStore((s) => s.setFind);
-  const clearFind = useFindStore((s) => s.clearFind);
+  const selections = useFindStore((s) => s.selections);
+  const toggleSelection = useFindStore((s) => s.toggle);
+  const removeSelection = useFindStore((s) => s.remove);
+  const clearSelections = useFindStore((s) => s.clear);
 
   const allTags = useMemo(() => {
     if (!items) return [];
@@ -65,8 +67,8 @@ export default function HomePage() {
   }, [items, activeTag]);
 
   function handleFind(item: ItemsTyped) {
-    if (findItemId === item.id) {
-      clearFind();
+    if (selections.has(item.id)) {
+      removeSelection(item.id);
       return;
     }
     const frame: WarlsFrame = new Map();
@@ -80,12 +82,14 @@ export default function HomePage() {
       }
       perDevice.set(cell.led_index, HIGHLIGHT_COLOR);
     }
-    if (frame.size === 0) {
-      clearFind();
-      return;
-    }
-    setFind(item.id, frame);
+    if (frame.size === 0) return;
+    toggleSelection(item.id, frame);
   }
+
+  const selectedItems = useMemo(() => {
+    if (!items || selections.size === 0) return [];
+    return items.filter((i) => selections.has(i.id)) as ItemsTyped[];
+  }, [items, selections]);
 
   function handleEdit(item: ItemsTyped) {
     setEditingItem(item);
@@ -101,11 +105,14 @@ export default function HomePage() {
     <div className="space-y-6">
       {/* Header row */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {items ? `${items.length} item${items.length !== 1 ? "s" : ""}` : "Loading…"}
-          </p>
+        <div className="flex items-center gap-6">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {items ? `${items.length} item${items.length !== 1 ? "s" : ""}` : "Loading…"}
+            </p>
+          </div>
+          <SelectionBar items={selectedItems} />
         </div>
 
         <div className="flex items-center gap-3">
@@ -113,8 +120,8 @@ export default function HomePage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={clearFind}
-            disabled={findItemId === null}
+            onClick={clearSelections}
+            disabled={selections.size === 0}
             className="gap-1.5 text-muted-foreground hover:text-foreground"
           >
             <ZapOffIcon className="h-3.5 w-3.5" />
@@ -182,7 +189,7 @@ export default function HomePage() {
               key={item.id}
               item={item as ItemsTyped}
               onHighlight={handleFind}
-              isHighlighting={findItemId === item.id}
+              isHighlighting={selections.has(item.id)}
               onEdit={handleEdit}
               onDelete={setDeletingItem}
             />
