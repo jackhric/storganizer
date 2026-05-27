@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { GripVerticalIcon, PlusIcon } from "lucide-react";
+import { GripVerticalIcon, PackageOpenIcon, PlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -51,11 +51,20 @@ export function AssignmentItemList({ items, isLoading }: Props) {
             ))}
           </ul>
         ) : !items || items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <p className="text-sm font-medium">No items yet</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Add items from the Inventory page to assign them.
-            </p>
+          <div className="flex h-full flex-col items-center justify-center px-6 py-16 text-center gap-4">
+            <div className="rounded-full bg-muted p-5">
+              <PackageOpenIcon className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-base font-semibold">No items yet</h3>
+              <p className="text-sm text-muted-foreground">
+                Add your first item to start assigning them to cells.
+              </p>
+            </div>
+            <Button onClick={() => setFormOpen(true)} size="lg" className="mt-1">
+              <PlusIcon className="h-4 w-4" />
+              Add your first item
+            </Button>
           </div>
         ) : (
           <ul className="divide-y divide-border">

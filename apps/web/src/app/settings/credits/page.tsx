@@ -30,6 +30,10 @@ const frontend: Credit[] = [
   { name: "PocketBase JS SDK", description: "Backend client", license: "MIT", href: "https://github.com/pocketbase/js-sdk" },
 ];
 
+const inspiration: Credit[] = [
+  { name: "Spotlight Storage", description: "LED-lit storage organizer that inspired this project", license: "GPL-3.0", href: "https://github.com/FireMarshmellow/Spotlight_Storage" },
+];
+
 const backend: Credit[] = [
   { name: "PocketBase", description: "Backend framework", license: "MIT", href: "https://github.com/pocketbase/pocketbase" },
   { name: "Go", description: "Programming language", license: "BSD-3-Clause", href: "https://github.com/golang/go" },
@@ -78,12 +82,11 @@ export default function CreditsPage() {
       <div className="space-y-3">
         <h1 className="text-2xl font-semibold tracking-tight">Credits & Licenses</h1>
         <p className="text-sm text-muted-foreground">
-          Storganizer is built on the work of these open source projects. Thank you to their authors and maintainers.
+          Storganizer is built on the work of these open source projects. Thank you!
         </p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-        </p>
+        
       </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CreditSection title="Frontend" items={frontend} />
