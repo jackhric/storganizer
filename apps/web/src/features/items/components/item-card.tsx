@@ -1,16 +1,20 @@
 "use client";
 
+import { useState, type DragEvent } from "react";
 import { motion } from "motion/react";
-import { ZapIcon, ZapOffIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, AlertTriangleIcon, SearchIcon } from "lucide-react";
+import { ZapIcon, ZapOffIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, AlertTriangleIcon, SearchIcon, ImageIcon, Loader2Icon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { pb } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
-import { getTagColor } from "@/lib/tags";
-import { useTags } from "@/features/tags/hooks/use-tags";
+import { deterministicColor } from "@/lib/tags";
+import { useSelectionBorderStore } from "@/lib/stores/selection-border";
+import { useUpdateItem } from "@/features/items/hooks/use-items";
 import { TagDot, TagOverflowDot } from "@/features/tags/components/tag-dot";
 import type { ItemsTyped } from "@/types/items";
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 // --- Spring tuning -----------------------------------------------------------
 // Adjust these to dial in the click/hover feel.
@@ -29,13 +33,69 @@ type Props = {
 };
 
 export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }: Props) {
-  const { data: allTags } = useTags();
   const imageUrl = item.image
     ? pb.files.getURL(item, item.image, { thumb: "400x400" })
     : null;
 
-  const tags: string[] = Array.isArray(item.tags) ? item.tags : [];
+  const tags = item.expand?.tags ?? [];
   const hasAssignment = (item.expand?.assignments_via_item_id?.length ?? 0) > 0;
+  const selectionBorder = useSelectionBorderStore((s) => s.style);
+
+  const updateItem = useUpdateItem();
+  const [fileDragOver, setFileDragOver] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
+
+  function isFileDrag(e: DragEvent<HTMLDivElement>): boolean {
+    return Array.from(e.dataTransfer.types).includes("Files");
+  }
+
+  function onDragEnter(e: DragEvent<HTMLDivElement>) {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    setFileDragOver(true);
+  }
+
+  function onDragOver(e: DragEvent<HTMLDivElement>) {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  }
+
+  function onDragLeave(e: DragEvent<HTMLDivElement>) {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setFileDragOver(false);
+  }
+
+  async function onDrop(e: DragEvent<HTMLDivElement>) {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    setFileDragOver(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setDropError("Not an image");
+      window.setTimeout(() => setDropError(null), 2000);
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setDropError(`Too large (max ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB)`);
+      window.setTimeout(() => setDropError(null), 2500);
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append("image", file);
+    try {
+      await updateItem.mutateAsync({ id: item.id, data: payload as never });
+    } catch {
+      setDropError("Upload failed");
+      window.setTimeout(() => setDropError(null), 2500);
+    }
+  }
+
+  const isUploading = updateItem.isPending;
 
   return (
     <motion.div
@@ -43,6 +103,10 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
       whileHover={{ scale: HOVER_SCALE, y: HOVER_LIFT_Y }}
       whileTap={{ scale: TAP_SCALE }}
       transition={SPRING}
+      onDragEnter={onDragEnter}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
     >
       {/* Marching-ants outline (while finding) — sits outside the card */}
       {isHighlighting && (
@@ -61,9 +125,10 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
             fill="none"
             stroke="var(--primary)"
             strokeWidth="2.5"
-            strokeDasharray="8 6"
             strokeLinecap="round"
-            className="marching-ants"
+            {...(selectionBorder === "marching-ants"
+              ? { strokeDasharray: "8 6", className: "marching-ants" }
+              : {})}
           />
         </svg>
       )}
@@ -71,6 +136,7 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
       onClick={() => onHighlight?.(item)}
       className={cn(
         "group relative aspect-square cursor-pointer overflow-hidden border-border/60 bg-muted p-0 transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5",
+        fileDragOver && "ring-2 ring-primary ring-offset-2 ring-offset-background",
       )}
     >
       {/* Background: image or initials */}
@@ -166,6 +232,28 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
         <SearchIcon className="absolute bottom-2 right-2 z-20 h-7 w-7 text-white drop-shadow-md animate-pulse" />
       )}
 
+      {/* File drag-over overlay */}
+      {fileDragOver && (
+        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-primary/15 backdrop-blur-[2px]">
+          <ImageIcon className="h-8 w-8 text-white drop-shadow-md" />
+          <p className="text-xs font-medium text-white drop-shadow-md">Drop to replace image</p>
+        </div>
+      )}
+
+      {/* Uploading overlay */}
+      {isUploading && (
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
+          <Loader2Icon className="h-6 w-6 animate-spin text-foreground" />
+        </div>
+      )}
+
+      {/* Drop error toast */}
+      {dropError && (
+        <div className="pointer-events-none absolute inset-x-2 top-2 z-30 rounded-md bg-destructive px-2 py-1 text-center text-xs font-medium text-destructive-foreground shadow-md">
+          {dropError}
+        </div>
+      )}
+
     </Card>
 
     {/* Bottom text overlay (sibling of Card so its hover labels aren't clipped) */}
@@ -178,12 +266,12 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
       {tags.length > 0 && (
         <div className="pointer-events-auto flex items-center gap-1">
           {tags.slice(0, 2).map((tag) => (
-            <TagDot key={tag} label={tag} color={getTagColor(tag, allTags)} />
+            <TagDot key={tag.id} label={tag.name} color={tag.color || deterministicColor(tag.name)} />
           ))}
           {tags.length > 2 && (
             <TagOverflowDot
               count={tags.length - 2}
-              hiddenTags={tags.slice(2).map((t) => ({ name: t, color: getTagColor(t, allTags) }))}
+              hiddenTags={tags.slice(2).map((t) => ({ name: t.name, color: t.color || deterministicColor(t.name) }))}
             />
           )}
         </div>

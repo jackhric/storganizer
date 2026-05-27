@@ -37,19 +37,20 @@ export type AssignmentWithCellExpand = {
   cell_id?: CellsResponse;
 };
 
-export type ItemWithAssignmentsExpand = {
+export type ItemExpand = {
   assignments_via_item_id?: AssignmentsResponse<AssignmentWithCellExpand>[];
+  tags?: TagsResponse[];
 };
 
 export async function getItems(
   filter?: string
-): Promise<ItemsResponse<unknown, unknown, ItemWithAssignmentsExpand>[]> {
+): Promise<ItemsResponse<unknown, ItemExpand>[]> {
   return pb
     .collection("items")
-    .getFullList<ItemsResponse<unknown, unknown, ItemWithAssignmentsExpand>>({
+    .getFullList<ItemsResponse<unknown, ItemExpand>>({
       sort: "name",
       filter,
-      expand: "assignments_via_item_id.cell_id",
+      expand: "assignments_via_item_id.cell_id,tags",
     });
 }
 
@@ -67,6 +68,10 @@ export async function updateItem(id: string, data: Update<"items">) {
 
 export async function deleteItem(id: string) {
   return pb.collection("items").delete(id);
+}
+
+export async function updateItemTags(id: string, tagIds: string[]): Promise<ItemsResponse> {
+  return pb.collection("items").update<ItemsResponse>(id, { tags: tagIds });
 }
 
 // ---- cells -----------------------------------------------------------------
@@ -91,8 +96,12 @@ export async function getAssignmentsByItem(
     });
 }
 
+export type ItemWithTagsExpand = {
+  tags?: TagsResponse[];
+};
+
 export type AssignmentWithItemExpand = {
-  item_id?: ItemsResponse;
+  item_id?: ItemsResponse<unknown, ItemWithTagsExpand>;
 };
 
 export async function getAssignmentsByDevice(
@@ -102,7 +111,7 @@ export async function getAssignmentsByDevice(
     .collection("assignments")
     .getFullList<AssignmentsResponse<AssignmentWithItemExpand>>({
       filter: `cell_id.device_id = "${deviceId}"`,
-      expand: "item_id",
+      expand: "item_id,item_id.tags",
     });
 }
 

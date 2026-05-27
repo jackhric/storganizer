@@ -3,31 +3,29 @@
 import { useMemo } from "react";
 import { TagIcon } from "lucide-react";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
-import { getTagColor } from "@/lib/tags";
-import { useTags } from "../hooks/use-tags";
+import { deterministicColor } from "@/lib/tags";
+import type { TagsResponse } from "@/lib/api/types";
 
 type Props = {
-  available: string[];
+  available: TagsResponse[];
   value: string[];
   onChange: (next: string[]) => void;
 };
 
 export function TagsFilter({ available, value, onChange }: Props) {
-  const { data: tags } = useTags();
-
   const options = useMemo(
     () =>
-      available.map((name) => ({
-        value: name,
-        label: name,
+      available.map((t) => ({
+        value: t.id,
+        label: t.name,
         leading: (
           <span
             className="h-3 w-3 shrink-0 rounded-full border border-black/10"
-            style={{ backgroundColor: getTagColor(name, tags) }}
+            style={{ backgroundColor: t.color || deterministicColor(t.name) }}
           />
         ),
       })),
-    [available, tags],
+    [available],
   );
 
   return (

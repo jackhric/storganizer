@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getTagColor, randomTagColor, readableForeground } from "@/lib/tags";
+import { deterministicColor, randomTagColor, readableForeground } from "@/lib/tags";
 import { useCreateTag, useTags, useUpdateTag } from "../hooks/use-tags";
+import type { TagsResponse } from "@/lib/api/types";
 
 type Props = {
   value: string[];
@@ -20,41 +21,57 @@ export function TagInput({ value, onChange }: Props) {
   const createTag = useCreateTag();
   const updateTag = useUpdateTag();
 
+  const tagsById = useMemo(() => {
+    const m = new Map<string, TagsResponse>();
+    for (const t of tags ?? []) m.set(t.id, t);
+    return m;
+  }, [tags]);
+
   const suggestions = useMemo(() => {
     if (!tags) return [];
     const lower = input.trim().toLowerCase();
+    const selected = new Set(value);
     return tags
-      .filter((t) => !value.includes(t.name))
+      .filter((t) => !selected.has(t.id))
       .filter((t) => !lower || t.name.toLowerCase().includes(lower));
   }, [tags, value, input]);
 
-  function addTag(name: string) {
-    const t = name.trim().toLowerCase();
-    if (!t || value.includes(t)) {
+  async function addByName(name: string) {
+    const t = name.trim();
+    if (!t) {
       setInput("");
       return;
     }
-    if (tags && !tags.some((tag) => tag.name === t)) {
-      createTag.mutate({ name: t, color: randomTagColor() });
+    const lower = t.toLowerCase();
+    const existing = tags?.find((tag) => tag.name.toLowerCase() === lower);
+    if (existing) {
+      if (!value.includes(existing.id)) onChange([...value, existing.id]);
+      setInput("");
+      return;
     }
-    onChange([...value, t]);
+    try {
+      const created = await createTag.mutateAsync({ name: t, color: randomTagColor() });
+      onChange([...value, created.id]);
+    } finally {
+      setInput("");
+    }
+  }
+
+  function addById(id: string) {
+    if (value.includes(id)) return;
+    onChange([...value, id]);
     setInput("");
   }
 
-  function removeTag(name: string) {
-    onChange(value.filter((n) => n !== name));
+  function removeTag(id: string) {
+    onChange(value.filter((x) => x !== id));
   }
 
-  function handleColorChange(name: string, color: string) {
-    const existing = tags?.find((t) => t.name === name);
-    if (existing) {
-      updateTag.mutate({ id: existing.id, data: { color } });
-    } else {
-      createTag.mutate({ name, color });
-    }
+  function handleColorChange(id: string, color: string) {
+    updateTag.mutate({ id, data: { color } });
   }
 
-  const showSuggestions = focused && suggestions.length > 0;
+  const showSuggestions = focused;
 
   return (
     <div className="space-y-1.5">
@@ -70,7 +87,7 @@ export function TagInput({ value, onChange }: Props) {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  addTag(input);
+                  void addByName(input);
                 }
               }}
               placeholder="Type and press Enter…"
@@ -85,38 +102,52 @@ export function TagInput({ value, onChange }: Props) {
           className="max-h-56 gap-0 overflow-y-auto p-1"
           style={{ width: "var(--anchor-width)" }}
         >
-          {suggestions.map((t) => {
-            const color = t.color || getTagColor(t.name, tags);
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => addTag(t.name)}
-                className="flex w-full items-center gap-0 rounded-sm px-2 py-1 text-left text-sm hover:bg-muted"
-              >
-                <span
-                  className="h-3 w-3 shrink-0 rounded-full border border-black/10"
-                  style={{ backgroundColor: color }}
-                />
-                {t.name}
-              </button>
-            );
-          })}
+          {suggestions.length === 0 ? (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+              {input.trim()
+                ? "No matching tags. Press Enter to create."
+                : (tags?.length ?? 0) === 0
+                  ? "No tags yet. Type one and press Enter to create."
+                  : "All tags are already added."}
+            </div>
+          ) : (
+            suggestions.map((t) => {
+              const color = t.color || deterministicColor(t.name);
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => addById(t.id)}
+                  className="flex w-full items-center gap-0 rounded-sm px-2 py-1 text-left text-sm hover:bg-muted"
+                >
+                  <span
+                    className="h-3 w-3 shrink-0 rounded-full border border-black/10"
+                    style={{ backgroundColor: color }}
+                  />
+                  {t.name}
+                </button>
+              );
+            })
+          )}
         </PopoverContent>
       </Popover>
 
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-1">
-          {value.map((name) => (
-            <TagBadge
-              key={name}
-              name={name}
-              color={getTagColor(name, tags)}
-              onColorChange={(c) => handleColorChange(name, c)}
-              onRemove={() => removeTag(name)}
-            />
-          ))}
+          {value.map((id) => {
+            const tag = tagsById.get(id);
+            if (!tag) return null;
+            return (
+              <TagBadge
+                key={id}
+                name={tag.name}
+                color={tag.color || deterministicColor(tag.name)}
+                onColorChange={(c) => handleColorChange(id, c)}
+                onRemove={() => removeTag(id)}
+              />
+            );
+          })}
         </div>
       )}
     </div>

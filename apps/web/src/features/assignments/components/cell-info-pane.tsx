@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2Icon } from "lucide-react";
+import { MousePointerClickIcon, Trash2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,11 +55,16 @@ export function CellInfoPane({
 
 function EmptySelection() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-      <p className="text-sm font-medium">No cell selected</p>
-      <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
-        Click a cell in the grid to see its assignment and edit details.
-      </p>
+    <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center gap-4">
+      <div className="rounded-full bg-muted p-5">
+        <MousePointerClickIcon className="h-10 w-10 text-muted-foreground" />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <h3 className="text-base font-semibold">No cell selected</h3>
+        <p className="text-sm text-muted-foreground max-w-[240px]">
+          Click a cell in the grid to see its assignment and edit details.
+        </p>
+      </div>
     </div>
   );
 }
@@ -145,11 +150,11 @@ function OccupiedDetails({
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-medium text-sm leading-tight">{item?.name ?? "Unknown item"}</p>
-          {Array.isArray(item?.tags) && (item.tags as string[]).length > 0 && (
+          {(item?.expand?.tags?.length ?? 0) > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
-              {(item.tags as string[]).map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
-                  {tag}
+              {item!.expand!.tags!.map((tag) => (
+                <Badge key={tag.id} variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {tag.name}
                 </Badge>
               ))}
             </div>

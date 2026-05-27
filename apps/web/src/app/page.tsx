@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { PlusIcon, ZapOffIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { PackageOpenIcon, PlusIcon, SearchXIcon, ZapOffIcon } from "lucide-react";
+import { LogoMark } from "@/components/logo-mark";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ItemCard } from "@/features/items/components/item-card";
 import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
@@ -13,6 +15,7 @@ import { TagsFilter } from "@/features/tags/components/tags-filter";
 import { DevicesFilter } from "@/features/devices/components/devices-filter";
 import { useItems } from "@/features/items/hooks/use-items";
 import { useDevices } from "@/features/devices/hooks/use-devices";
+import { useTags } from "@/features/tags/hooks/use-tags";
 import { useFindStore } from "@/lib/stores/find";
 import type { WarlsFrame } from "@/lib/wled/use-warls";
 import type { Rgb } from "@/lib/color/oklch";
@@ -29,6 +32,7 @@ export default function HomePage() {
 
   const { data: items, isLoading: itemsLoading } = useItems();
   const { data: devices } = useDevices();
+  const { data: tags } = useTags();
   const gridRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(0);
 
@@ -52,25 +56,13 @@ export default function HomePage() {
   const removeSelection = useFindStore((s) => s.remove);
   const clearSelections = useFindStore((s) => s.clear);
 
-  const allTags = useMemo(() => {
-    if (!items) return [];
-    const tagSet = new Set<string>();
-    for (const item of items) {
-      if (Array.isArray(item.tags)) {
-        for (const tag of item.tags as string[]) tagSet.add(tag);
-      }
-    }
-    return Array.from(tagSet).sort();
-  }, [items]);
-
   const filtered = useMemo(() => {
     if (!items) return [];
     const deviceSet = new Set(activeDevices);
     return items.filter((item) => {
       if (activeTags.length > 0) {
-        if (!Array.isArray(item.tags)) return false;
-        const tags = item.tags as string[];
-        if (!activeTags.every((t) => tags.includes(t))) return false;
+        const ids = Array.isArray(item.tags) ? item.tags : [];
+        if (!activeTags.every((id) => ids.includes(id))) return false;
       }
       if (deviceSet.size > 0) {
         const assignments = item.expand?.assignments_via_item_id ?? [];
@@ -120,7 +112,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-full flex-col gap-6">
       {/* Header row */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-6">
@@ -137,7 +129,7 @@ export default function HomePage() {
           {devices && <DeviceStatusBar devices={devices} />}
           <Button
             variant="ghost"
-            size="sm"
+            size="lg"
             onClick={clearSelections}
             disabled={selections.size === 0}
             className="gap-1.5 text-muted-foreground hover:text-foreground"
@@ -145,7 +137,7 @@ export default function HomePage() {
             <ZapOffIcon className="h-3.5 w-3.5" />
             Clear LEDs
           </Button>
-          <Button size="sm" onClick={() => setFormOpen(true)} className="gap-1.5">
+          <Button size="lg" onClick={() => setFormOpen(true)} className="gap-1.5">
             <PlusIcon className="h-3.5 w-3.5" />
             Add item
           </Button>
@@ -153,18 +145,20 @@ export default function HomePage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-2">
-        <TagsFilter
-          available={allTags}
-          value={activeTags}
-          onChange={setActiveTags}
-        />
-        <DevicesFilter
-          devices={devices ?? []}
-          value={activeDevices}
-          onChange={setActiveDevices}
-        />
-      </div>
+      {items && items.length > 0 && (
+        <div className="flex items-center gap-2">
+          <TagsFilter
+            available={tags ?? []}
+            value={activeTags}
+            onChange={setActiveTags}
+          />
+          <DevicesFilter
+            devices={devices ?? []}
+            value={activeDevices}
+            onChange={setActiveDevices}
+          />
+        </div>
+      )}
 
       {/* Items grid */}
       {itemsLoading ? (
@@ -174,15 +168,58 @@ export default function HomePage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
-          <p className="text-sm font-medium text-muted-foreground">
-            {items?.length === 0 ? "No items yet" : "No items match these filters"}
-          </p>
-          {items?.length === 0 && (
-            <Button size="sm" onClick={() => setFormOpen(true)} className="gap-1.5">
-              <PlusIcon className="h-3.5 w-3.5" />
-              Add your first item
-            </Button>
+        <div className="flex flex-1 flex-col items-center justify-center text-center gap-6">
+          {devices && devices.length === 0 ? (
+            <>
+              <div className="rounded-full bg-muted p-7">
+                <LogoMark className="h-16 w-auto text-muted-foreground" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <h2 className="text-3xl font-semibold">Welcome to Storganizer!</h2>
+                <p className="max-w-md text-base text-muted-foreground">
+                  Get started by adding your WLED organizer device, then come back to start adding items.
+                </p>
+              </div>
+              <Link
+                href="/settings/wled"
+                className={buttonVariants({ size: "lg", className: "mt-2 h-12 px-6 text-base" })}
+              >
+                <PlusIcon className="h-5 w-5" />
+                Add a WLED device
+              </Link>
+            </>
+          ) : items?.length === 0 ? (
+            <>
+              <div className="rounded-full bg-muted p-7">
+                <PackageOpenIcon className="h-16 w-16 text-muted-foreground" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <h2 className="text-3xl font-semibold">No items yet</h2>
+                <p className="max-w-md text-base text-muted-foreground">
+                  Add your first item to start organizing your inventory across devices and cells.
+                </p>
+              </div>
+              <Button
+                onClick={() => setFormOpen(true)}
+                size="lg"
+                className="mt-2 h-12 px-6 text-base"
+              >
+                <PlusIcon className="h-5 w-5" />
+                Add your first item
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="rounded-full bg-muted p-7">
+                <SearchXIcon className="h-16 w-16 text-muted-foreground" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <h2 className="text-3xl font-semibold">No items match these filters</h2>
+                <p className="max-w-md text-base text-muted-foreground">
+                  Try clearing some tag or device filters to see more items.
+                </p>
+              </div>
+            </>
           )}
         </div>
       ) : (

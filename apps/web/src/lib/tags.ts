@@ -1,5 +1,3 @@
-import type { TagsResponse } from "@/lib/api/types";
-
 /** djb2 hash of a string. */
 function hash(s: string): number {
   let h = 5381;
@@ -32,15 +30,6 @@ export function deterministicColor(name: string): string {
 export function randomTagColor(): string {
   const hue = Math.floor(Math.random() * 360);
   return hslToHex(hue, 55, 50);
-}
-
-/** Returns the configured hex color for a tag name, or a deterministic fallback. */
-export function getTagColor(name: string, tags?: TagsResponse[] | null): string {
-  if (tags) {
-    const t = tags.find((x) => x.name === name);
-    if (t?.color) return t.color;
-  }
-  return deterministicColor(name);
 }
 
 /**

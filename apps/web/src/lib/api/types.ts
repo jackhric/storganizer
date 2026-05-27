@@ -123,14 +123,14 @@ export type DevicesRecord = {
 	url: string
 }
 
-export type ItemsRecord<Texternal_links = unknown, Ttags = unknown> = {
+export type ItemsRecord<Texternal_links = unknown> = {
 	external_links?: null | Texternal_links
 	id: string
 	image?: FileNameString
 	name: string
 	notes?: string
 	store_url?: string
-	tags?: null | Ttags
+	tags?: RecordIdString[]
 }
 
 export type TagsRecord = {
@@ -161,7 +161,7 @@ export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> &
 export type AssignmentsResponse<Texpand = unknown> = Required<AssignmentsRecord> & BaseSystemFields<Texpand>
 export type CellsResponse<Texpand = unknown> = Required<CellsRecord> & BaseSystemFields<Texpand>
 export type DevicesResponse<Texpand = unknown> = Required<DevicesRecord> & BaseSystemFields<Texpand>
-export type ItemsResponse<Texternal_links = unknown, Ttags = unknown, Texpand = unknown> = Required<ItemsRecord<Texternal_links, Ttags>> & BaseSystemFields<Texpand>
+export type ItemsResponse<Texternal_links = unknown, Texpand = unknown> = Required<ItemsRecord<Texternal_links>> & BaseSystemFields<Texpand>
 export type TagsResponse<Texpand = unknown> = Required<TagsRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
