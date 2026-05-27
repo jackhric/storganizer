@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SlidersHorizontalIcon, ZapIcon, ChevronRightIcon } from "lucide-react";
+import { SlidersHorizontalIcon, ZapIcon, ChevronRightIcon, ScrollTextIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const categories = [
@@ -18,11 +18,11 @@ const categories = [
     disabled: false,
   },
   {
-    href: "#",
-    label: "Coming soon",
-    description: "More settings on the way",
-    icon: null,
-    disabled: true,
+    href: "/settings/credits",
+    label: "Credits & Licenses",
+    description: "Open source acknowledgements",
+    icon: ScrollTextIcon,
+    disabled: false,
   },
   {
     href: "#",
