@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BoxIcon, LinkIcon, SettingsIcon } from "lucide-react";
+import { BoxIcon, LinkIcon, SettingsIcon, TagIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/logo";
 import { LogoMark } from "@/components/logo-mark";
@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { href: "/", label: "Items", icon: BoxIcon },
   { href: "/assignments", label: "Assignments", icon: LinkIcon },
+  { href: "/tags", label: "Tags", icon: TagIcon },
 ];
 
 export function AppSidebar() {
