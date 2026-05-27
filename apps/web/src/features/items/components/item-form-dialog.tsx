@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Loader2Icon, PlusIcon, XIcon } from "lucide-react";
+import { TagInput } from "@/features/tags/components/tag-input";
+import { Dropzone } from "@/components/dropzone";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { pb } from "@/lib/api/client";
 import { useCreateItem, useUpdateItem } from "../hooks/use-items";
 import type { ExternalLink, ItemsTyped } from "@/types/items";
@@ -42,12 +43,10 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
   const [links, setLinks] = useState<ExternalLink[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -76,20 +75,9 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
         setImagePreview(null);
       }
       setImageFile(null);
-      setTagInput("");
       setSubmitError(null);
     }
   }, [open, item, reset]);
-
-  function addTag() {
-    const t = tagInput.trim().toLowerCase();
-    if (t && !tags.includes(t)) setTags((prev) => [...prev, t]);
-    setTagInput("");
-  }
-
-  function removeTag(tag: string) {
-    setTags((prev) => prev.filter((t) => t !== tag));
-  }
 
   function addLink() {
     setLinks((prev) => [...prev, { label: "", url: "" }]);
@@ -101,13 +89,6 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
 
   function removeLink(i: number) {
     setLinks((prev) => prev.filter((_, idx) => idx !== i));
-  }
-
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
   }
 
   async function onSubmit(values: FormValues) {
@@ -161,32 +142,16 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
           {/* Image */}
           <div className="space-y-1.5">
             <Label>Image</Label>
-            <div className="flex items-center gap-3">
-              {imagePreview && (
-                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                </div>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {imagePreview ? "Change image" : "Upload image"}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-            </div>
+            <Dropzone
+              value={imageFile}
+              previewUrl={imagePreview}
+              accept="image/jpeg,image/png,image/webp"
+              maxSizeBytes={5 * 1024 * 1024}
+              onChange={(file) => {
+                setImageFile(file);
+                setImagePreview(file ? URL.createObjectURL(file) : null);
+              }}
+            />
           </div>
 
           {/* Store URL */}
@@ -218,39 +183,7 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
           {/* Tags */}
           <div className="space-y-1.5">
             <Label>Tags</Label>
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTag();
-                  }
-                }}
-                placeholder="fastener, metric…"
-                className="flex-1"
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addTag}>
-                Add
-              </Button>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="gap-1 pr-1">
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="ml-0.5 rounded-sm hover:text-destructive"
-                    >
-                      <XIcon className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
+            <TagInput value={tags} onChange={setTags} />
           </div>
 
           {/* External links */}
@@ -269,7 +202,7 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
                     <Input
                       value={link.label}
                       onChange={(e) => updateLink(i, "label", e.target.value)}
-                      placeholder="Label"
+                      placeholder="Datasheet"
                       className="w-28 shrink-0"
                     />
                     <Input

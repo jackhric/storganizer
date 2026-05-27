@@ -51,8 +51,13 @@ export function SelectionBar({ items }: Props) {
   return (
     <Popover>
       <PopoverTrigger
+        nativeButton={false}
         render={
-          <div className="flex cursor-pointer select-none items-center gap-3 rounded-md px-2 py-1.5 text-xs text-muted-foreground outline-none transition-colors duration-150 hover:bg-muted" />
+          <div
+            role="button"
+            tabIndex={0}
+            className="flex cursor-pointer select-none items-center gap-3 rounded-md px-2 py-1.5 text-xs text-muted-foreground outline-none transition-colors duration-150 hover:bg-muted"
+          />
         }
       >
         <span className="font-medium text-foreground/60 uppercase tracking-wider text-[10px]">

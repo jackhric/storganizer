@@ -9,6 +9,8 @@ import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
 import { DeleteItemDialog } from "@/features/items/components/delete-item-dialog";
 import { DeviceStatusBar } from "@/features/items/components/device-status-bar";
 import { SelectionBar } from "@/features/items/components/selection-bar";
+import { TagsFilter } from "@/features/tags/components/tags-filter";
+import { DevicesFilter } from "@/features/devices/components/devices-filter";
 import { useItems } from "@/features/items/hooks/use-items";
 import { useDevices } from "@/features/devices/hooks/use-devices";
 import { useFindStore } from "@/lib/stores/find";
@@ -19,7 +21,8 @@ import type { ItemsTyped } from "@/types/items";
 const HIGHLIGHT_COLOR: Rgb = { r: 255, g: 140, b: 0 };
 
 export default function HomePage() {
-  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [activeDevices, setActiveDevices] = useState<string[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ItemsTyped | undefined>(undefined);
   const [deletingItem, setDeletingItem] = useState<ItemsTyped | null>(null);
@@ -62,9 +65,24 @@ export default function HomePage() {
 
   const filtered = useMemo(() => {
     if (!items) return [];
-    if (!activeTag) return items;
-    return items.filter((item) => Array.isArray(item.tags) && (item.tags as string[]).includes(activeTag));
-  }, [items, activeTag]);
+    const deviceSet = new Set(activeDevices);
+    return items.filter((item) => {
+      if (activeTags.length > 0) {
+        if (!Array.isArray(item.tags)) return false;
+        const tags = item.tags as string[];
+        if (!activeTags.every((t) => tags.includes(t))) return false;
+      }
+      if (deviceSet.size > 0) {
+        const assignments = item.expand?.assignments_via_item_id ?? [];
+        const onDevice = assignments.some((a) => {
+          const id = a.expand?.cell_id?.device_id;
+          return id ? deviceSet.has(id) : false;
+        });
+        if (!onDevice) return false;
+      }
+      return true;
+    });
+  }, [items, activeTags, activeDevices]);
 
   function handleFind(item: ItemsTyped) {
     if (selections.has(item.id)) {
@@ -134,31 +152,19 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Tag filter */}
-      {allTags.length > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-          <Button
-            key="all"
-            variant={activeTag === null ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTag(null)}
-            className="shrink-0 text-xs h-9"
-          >
-            All
-          </Button>
-          {allTags.map((tag) => (
-            <Button
-              key={tag}
-              variant={activeTag === tag ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className="shrink-0 text-xs h-9"
-            >
-              {tag}
-            </Button>
-          ))}
-        </div>
-      )}
+      {/* Filter bar */}
+      <div className="flex items-center gap-2">
+        <TagsFilter
+          available={allTags}
+          value={activeTags}
+          onChange={setActiveTags}
+        />
+        <DevicesFilter
+          devices={devices ?? []}
+          value={activeDevices}
+          onChange={setActiveDevices}
+        />
+      </div>
 
       {/* Items grid */}
       {itemsLoading ? (
@@ -170,7 +176,7 @@ export default function HomePage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
           <p className="text-sm font-medium text-muted-foreground">
-            {items?.length === 0 ? "No items yet" : "No items match this tag"}
+            {items?.length === 0 ? "No items yet" : "No items match these filters"}
           </p>
           {items?.length === 0 && (
             <Button size="sm" onClick={() => setFormOpen(true)} className="gap-1.5">

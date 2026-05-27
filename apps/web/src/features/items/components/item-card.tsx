@@ -3,11 +3,13 @@
 import { motion } from "motion/react";
 import { ZapIcon, ZapOffIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, AlertTriangleIcon, SearchIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { pb } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
+import { getTagColor } from "@/lib/tags";
+import { useTags } from "@/features/tags/hooks/use-tags";
+import { TagDot, TagOverflowDot } from "@/features/tags/components/tag-dot";
 import type { ItemsTyped } from "@/types/items";
 
 // --- Spring tuning -----------------------------------------------------------
@@ -27,6 +29,7 @@ type Props = {
 };
 
 export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }: Props) {
+  const { data: allTags } = useTags();
   const imageUrl = item.image
     ? pb.files.getURL(item, item.image, { thumb: "400x400" })
     : null;
@@ -163,46 +166,40 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
         <SearchIcon className="absolute bottom-2 right-2 z-20 h-7 w-7 text-white drop-shadow-md animate-pulse" />
       )}
 
-      {/* Bottom text overlay: name, tags, notes */}
-      <div
-        className={cn(
-          "absolute inset-x-0 bottom-0 z-10 space-y-1 p-2.5 text-white",
-          isHighlighting && "pr-11",
-        )}
-      >
+    </Card>
+
+    {/* Bottom text overlay (sibling of Card so its hover labels aren't clipped) */}
+    <div
+      className={cn(
+        "pointer-events-none absolute inset-x-0 bottom-0 z-10 flex cursor-pointer flex-col gap-1 p-2.5 text-white",
+        isHighlighting && "pr-11",
+      )}
+    >
+      {tags.length > 0 && (
+        <div className="pointer-events-auto flex items-center gap-1">
+          {tags.slice(0, 2).map((tag) => (
+            <TagDot key={tag} label={tag} color={getTagColor(tag, allTags)} />
+          ))}
+          {tags.length > 2 && (
+            <TagOverflowDot
+              count={tags.length - 2}
+              hiddenTags={tags.slice(2).map((t) => ({ name: t, color: getTagColor(t, allTags) }))}
+            />
+          )}
+        </div>
+      )}
+
+      <div className="group/name pointer-events-auto relative w-fit max-w-full cursor-pointer">
         <p className="font-medium text-sm leading-tight line-clamp-2 drop-shadow-sm">
           {item.name}
         </p>
-
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {tags.slice(0, 3).map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="bg-white/15 text-white text-[10px] px-1.5 py-0 backdrop-blur-sm border-transparent hover:bg-white/25"
-              >
-                {tag}
-              </Badge>
-            ))}
-            {tags.length > 3 && (
-              <Badge
-                variant="secondary"
-                className="bg-white/15 text-white text-[10px] px-1.5 py-0 backdrop-blur-sm border-transparent"
-              >
-                +{tags.length - 3}
-              </Badge>
-            )}
-          </div>
-        )}
-
         {item.notes && (
-          <p className="text-[11px] text-white/80 line-clamp-2 leading-relaxed drop-shadow-sm">
+          <span className="pointer-events-none absolute bottom-full left-0 mb-1.5 max-w-[220px] whitespace-normal rounded-md bg-foreground px-2 py-1 text-xs font-medium text-background opacity-0 shadow-md transition-opacity duration-100 group-hover/name:opacity-100">
             {item.notes}
-          </p>
+          </span>
         )}
       </div>
-    </Card>
+    </div>
     </motion.div>
   );
 }
