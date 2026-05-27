@@ -30,6 +30,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
+      <div
+        aria-hidden
+        className="sidebar-grid-mask pointer-events-none opacity-80 group-data-[collapsible=icon]:opacity-60"
+      >
+        <div className="sidebar-grid" />
+      </div>
       <SidebarHeader className="px-4 py-5 flex flex-col items-center justify-center gap-2">
         <Link href="/">
           <Logo className="h-6 w-auto text-foreground group-data-[collapsible=icon]:hidden" />
@@ -57,7 +63,7 @@ export function AppSidebar() {
                     render={<Link href={href} />}
                     isActive={pathname === href}
                     tooltip={label}
-                    className="h-10"
+                    className="h-10 bg-sidebar/80 border border-sidebar-border backdrop-blur-sm"
                   >
                     <Icon
                       className={cn(
@@ -83,7 +89,7 @@ export function AppSidebar() {
               render={<Link href="/settings" />}
               isActive={pathname === "/settings"}
               tooltip="Settings"
-              className="h-10"
+              className="h-10 bg-sidebar/80 border border-sidebar-border backdrop-blur-sm"
             >
               <SettingsIcon
                 className={cn(

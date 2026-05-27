@@ -132,6 +132,36 @@
   animation: marching-ants 0.6s linear infinite;
 }
 
+@keyframes sidebar-grid-drift {
+  from {
+    transform: translate3d(-240px, -240px, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.sidebar-grid-mask {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to top, black, transparent);
+  mask-image: linear-gradient(to top, black, transparent);
+}
+
+.sidebar-grid {
+  position: absolute;
+  inset: -240px;
+  background-image:
+    linear-gradient(to right, var(--sidebar-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--sidebar-border) 1px, transparent 1px);
+  background-size: 24px 24px;
+  animation: sidebar-grid-drift 30s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
