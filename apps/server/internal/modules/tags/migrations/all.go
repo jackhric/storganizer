@@ -1,0 +1,7 @@
+package migrations
+
+import "github.com/storganizer/server/internal/app"
+
+func All() []app.Migration {
+	return []app.Migration{CreateTags, UniqueTagName, OpenRules}
+}

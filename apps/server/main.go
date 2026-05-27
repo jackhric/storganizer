@@ -8,6 +8,7 @@ import (
 	"github.com/storganizer/server/internal/modules/cells"
 	"github.com/storganizer/server/internal/modules/devices"
 	"github.com/storganizer/server/internal/modules/items"
+	"github.com/storganizer/server/internal/modules/tags"
 	"github.com/storganizer/server/internal/modules/warls"
 
 	"github.com/pocketbase/pocketbase"
@@ -28,6 +29,7 @@ func main() {
 		cells.New(),
 		assignments.New(),
 		warls.New(),
+		tags.New(),
 		// Add new modules here.
 	); err != nil {
 		log.Fatal(err)
