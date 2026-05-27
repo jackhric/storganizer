@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { UploadIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +67,40 @@ export function Dropzone({
     if (inputRef.current) inputRef.current.value = "";
   }
 
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const target = e.target as HTMLElement | null;
+      // Skip if a text field or editable element has focus.
+      if (target) {
+        const tag = target.tagName;
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          tag === "SELECT" ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+      }
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const it of items) {
+        if (it.kind === "file" && it.type.startsWith("image/")) {
+          const file = it.getAsFile();
+          if (file) {
+            e.preventDefault();
+            acceptFile(file);
+          }
+          return;
+        }
+      }
+    }
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+    // acceptFile closes over `accept` and `maxSizeBytes`; re-bind when those change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accept, maxSizeBytes, onChange]);
+
   const hasImage = !!previewUrl;
 
   return (
@@ -114,7 +148,7 @@ export function Dropzone({
           <div className="flex flex-col items-center gap-1.5 text-center text-muted-foreground">
             <UploadIcon className="h-5 w-5" />
             <p className="text-xs">
-              {dragOver ? "Drop image here" : "Drag image here, or click to browse"}
+              {dragOver ? "Drop image here" : "Drag, paste, or click to browse"}
             </p>
           </div>
         )}
