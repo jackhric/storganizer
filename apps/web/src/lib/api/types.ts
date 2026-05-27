@@ -15,6 +15,7 @@ export const Collections = {
 	Cells: "cells",
 	Devices: "devices",
 	Items: "items",
+	Tags: "tags",
 	Users: "users",
 } as const
 export type Collections = typeof Collections[keyof typeof Collections]
@@ -108,7 +109,7 @@ export type CellsRecord = {
 	device_id: RecordIdString
 	id: string
 	label?: string
-	led_index: number
+	led_index?: number
 }
 
 export type DevicesRecord = {
@@ -130,6 +131,12 @@ export type ItemsRecord<Texternal_links = unknown, Ttags = unknown> = {
 	notes?: string
 	store_url?: string
 	tags?: null | Ttags
+}
+
+export type TagsRecord = {
+	color?: string
+	id: string
+	name: string
 }
 
 export type UsersRecord = {
@@ -155,6 +162,7 @@ export type AssignmentsResponse<Texpand = unknown> = Required<AssignmentsRecord>
 export type CellsResponse<Texpand = unknown> = Required<CellsRecord> & BaseSystemFields<Texpand>
 export type DevicesResponse<Texpand = unknown> = Required<DevicesRecord> & BaseSystemFields<Texpand>
 export type ItemsResponse<Texternal_links = unknown, Ttags = unknown, Texpand = unknown> = Required<ItemsRecord<Texternal_links, Ttags>> & BaseSystemFields<Texpand>
+export type TagsResponse<Texpand = unknown> = Required<TagsRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
@@ -169,6 +177,7 @@ export type CollectionRecords = {
 	cells: CellsRecord
 	devices: DevicesRecord
 	items: ItemsRecord
+	tags: TagsRecord
 	users: UsersRecord
 }
 
@@ -182,6 +191,7 @@ export type CollectionResponses = {
 	cells: CellsResponse
 	devices: DevicesResponse
 	items: ItemsResponse
+	tags: TagsResponse
 	users: UsersResponse
 }
 

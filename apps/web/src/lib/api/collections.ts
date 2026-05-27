@@ -4,6 +4,7 @@ import type {
   ItemsResponse,
   CellsResponse,
   AssignmentsResponse,
+  TagsResponse,
   Create,
   Update,
 } from "./types";
@@ -115,4 +116,22 @@ export async function updateAssignment(id: string, data: Update<"assignments">) 
 
 export async function deleteAssignment(id: string) {
   return pb.collection("assignments").delete(id);
+}
+
+// ---- tags ------------------------------------------------------------------
+
+export async function getTags(): Promise<TagsResponse[]> {
+  return pb.collection("tags").getFullList<TagsResponse>({ sort: "name" });
+}
+
+export async function createTag(data: Create<"tags">) {
+  return pb.collection("tags").create<TagsResponse>(data);
+}
+
+export async function updateTag(id: string, data: Update<"tags">) {
+  return pb.collection("tags").update<TagsResponse>(id, data);
+}
+
+export async function deleteTag(id: string) {
+  return pb.collection("tags").delete(id);
 }
