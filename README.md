@@ -54,3 +54,7 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8090
 ## License
 
 [GNU Affero General Public License v3.0](LICENSE)
+
+## AI Disclosure
+
+Code in this repository is written with AI assistance (primarily Claude Code). All planning, architectural decisions, feature design, and product direction are mine. All changes are reviewed for code quality and robustness.
