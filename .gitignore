@@ -6,13 +6,15 @@ node_modules
 .turbo
 dist
 
-# PocketBase data
-apps/server/pb_data
-apps/server/pb_public
-
-# Go binaries
-apps/server/server
-apps/server/*.exe
+# Python backend
+apps/server/.venv
+apps/server/__pycache__
+**/__pycache__
+*.py[cod]
+apps/server/*.db
+apps/server/storage
+.pytest_cache
+.ruff_cache
 
 # Claude
 CLAUDE.md
@@ -23,3 +25,6 @@ AGENTS.md
 .env
 .env.local
 .env*.local
+
+# Python build metadata
+*.egg-info

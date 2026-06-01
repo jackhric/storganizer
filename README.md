@@ -20,20 +20,29 @@ Storganizer lets you map physical storage locations (bins, drawers, shelves) to 
 
 ## Getting Started
 
-**Prerequisites:** Node.js 20+, Go 1.25+
+**Prerequisites:** Node.js 20+, Python 3.11+ ([uv](https://docs.astral.sh/uv/) recommended)
 
 Run the backend and frontend in separate terminals:
 
 ```bash
 # Backend
-cd apps/server && go run main.go serve
+cd apps/server && uv venv .venv && source .venv/bin/activate \
+  && uv pip install -e '.[dev]' && uvicorn src.main:app --reload --port 8090
 
 # Frontend
 cd apps/web && npm install && npm run dev
 ```
 
 - Frontend: http://localhost:3000
-- Backend API + Admin UI: http://localhost:8090/\_/
+- Backend API: http://localhost:8090/api
+- API docs (OpenAPI): http://localhost:8090/docs
+
+See [`apps/server/README.md`](apps/server/README.md) for backend details.
+
+> **Note:** the backend has been migrated from Go/PocketBase to FastAPI. The
+> frontend still uses the PocketBase JS SDK and is pending migration to the new
+> REST contract — generate a typed client with `openapi-typescript` against
+> `/openapi.json`.
 
 **Environment variables**
 
@@ -48,8 +57,9 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8090
 | Layer         | Technology                                                  |
 | ------------- | ----------------------------------------------------------- |
 | Frontend      | Next.js 16, React 19, TypeScript, TailwindCSS v4, shadcn/ui |
-| Data fetching | TanStack Query v5, PocketBase JS SDK                        |
-| Backend       | Go, PocketBase (embedded SQLite + REST API)                 |
+| Data fetching | TanStack Query v5                                           |
+| Backend       | FastAPI, SQLAlchemy 2.0 (async) + SQLite, Pydantic v2       |
+| Migrations    | Alembic                                                     |
 
 ## License
 
