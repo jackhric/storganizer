@@ -19,8 +19,7 @@ class Cell(Base, IDMixin, TimestampMixin):
     device_id: Mapped[str] = mapped_column(
         ForeignKey("devices.id", ondelete="CASCADE")
     )
-    # Optional: a cell may exist before its LED index is assigned.
-    led_index: Mapped[int | None] = mapped_column(default=None)
+    led_index: Mapped[int]
     label: Mapped[str] = mapped_column(default="")
 
     device: Mapped[Device] = relationship(back_populates="cells")
