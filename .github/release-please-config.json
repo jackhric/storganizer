@@ -1,24 +1,32 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "include-component-in-tag": false,
-  "separate-pull-requests": false,
-  "plugins": [
-    {
-      "type": "linked-versions",
-      "groupName": "storganizer",
-      "components": ["server", "web"]
-    }
-  ],
+  "release-type": "simple",
   "packages": {
-    "apps/server": {
-      "release-type": "python",
-      "component": "server",
-      "package-name": "storganizer-server"
-    },
-    "apps/web": {
-      "release-type": "node",
-      "component": "web",
-      "package-name": "web"
+    ".": {
+      "package-name": "storganizer",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "apps/server/pyproject.toml",
+          "jsonpath": "$.project.version"
+        },
+        {
+          "type": "json",
+          "path": "apps/web/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "apps/web/package-lock.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "apps/web/package-lock.json",
+          "jsonpath": "$.packages[''].version"
+        }
+      ]
     }
   }
 }
