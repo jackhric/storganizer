@@ -1,0 +1,33 @@
+# VCS + editor noise
+.git
+.github
+.vscode
+.idea
+.claude
+
+# Node / Next.js
+**/node_modules
+**/.next
+**/out
+**/dist
+
+# Python
+**/__pycache__
+**/.venv
+**/venv
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/*.egg-info
+
+# Local runtime state (persisted in volumes at runtime, not baked in)
+**/storage
+**/data
+**/*.db
+**/*.db-journal
+**/*.db-wal
+**/*.db-shm
+
+# Misc
+*.log
+.DS_Store
