@@ -3,7 +3,7 @@
   <p>Make finding your Arduino components a breeze. Easy-to-use inventory management system powered by WLED addressable LEDs</p>
 
 ![License](https://img.shields.io/github/license/jackhric/storganizer)
-![Version](https://img.shields.io/github/package-json/v/jackhric/storganizer?filename=apps%2Fweb%2Fpackage.json)
+![Version](https://img.shields.io/github/v/release/jackhric/storganizer?sort=semver)
 
 </div>
 
