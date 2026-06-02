@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
 
 import src.core.metadata  # noqa: F401 — populate Base.metadata
@@ -102,6 +103,16 @@ def create_app() -> FastAPI:
     for router in api_routers:
         app.include_router(router, prefix="/api")
     app.include_router(warls_router)  # already absolute (/api/warls/stream)
+
+    # In a packaged deploy the Next.js static export is copied into web_dir;
+    # serving it from "/" turns this single ASGI app into the only front door.
+    # Mounted last so /api and /health routes still take precedence.
+    if settings.web_dir and settings.web_dir.is_dir():
+        app.mount(
+            "/",
+            StaticFiles(directory=settings.web_dir, html=True),
+            name="web",
+        )
 
     return app
 

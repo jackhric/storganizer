@@ -1,5 +1,7 @@
-export const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8090";
+// Empty string = same-origin (production: FastAPI serves the static bundle and
+// the API behind one host). Dev overrides this via .env.development → the
+// Next dev server runs on a different port than FastAPI.
+export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
 export type ApiError = Error & {
   status: number;

@@ -3,8 +3,15 @@
 import { useEffect, useRef } from "react";
 import type { Rgb } from "@/lib/color/oklch";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8090";
+// Resolve once per call: empty BACKEND_URL means "same origin", so we anchor
+// to window.location at connect time. SSR-safe guard returns "" up front.
+function warlsUrl(): string {
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+  const origin =
+    base ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  return origin.replace(/^http/, "ws") + "/api/warls/stream";
+}
 
 // Throttle send rate to ~30 fps. The backend handles WARLS keepalive itself
 // (re-sending the last frame to WLED every ~300ms), so this throttle only
@@ -41,8 +48,7 @@ export function useWarls(frame: WarlsFrame | null): void {
   // Open the socket once per consumer lifetime. The session is identified
   // purely by the connection itself.
   useEffect(() => {
-    const wsUrl = BACKEND_URL.replace(/^http/, "ws") + "/api/warls/stream";
-    const ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(warlsUrl());
     wsRef.current = ws;
 
     ws.addEventListener("open", () => {

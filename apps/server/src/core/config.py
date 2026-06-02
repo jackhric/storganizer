@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     # Where uploaded item images (and generated thumbnails) live on disk.
     storage_dir: Path = Path("./storage")
 
+    # Pre-built static web bundle (Next.js export). When set and present,
+    # the app serves it at "/" alongside the API at "/api" so a single
+    # container can host both. Leave unset in dev — the Next dev server
+    # runs separately on port 3000.
+    web_dir: Path | None = None
+
     # Browser origins allowed to call the API (the Next.js dev server).
     cors_origins: list[str] = ["http://localhost:3000"]
 
