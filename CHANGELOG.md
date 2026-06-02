@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/jackhric/storganizer/compare/storganizer-v0.3.0...storganizer-v0.4.0) (2026-06-02)
+
+
+### Features
+
+* trigger release to verify docker publish wiring ([a7d9c0a](https://github.com/jackhric/storganizer/commit/a7d9c0a2ade43e6d99a774a2cb61ca41d2fd6c68))
+
 ## [0.3.0](https://github.com/jackhric/storganizer/compare/storganizer-v0.2.0...storganizer-v0.3.0) (2026-06-02)
 
 
