@@ -1,6 +1,6 @@
 [project]
 name = "storganizer-server"
-version = "0.3.0"
+version = "0.4.0"
 description = "Storganizer backend — FastAPI + SQLAlchemy, drives WLED addressable LEDs for physical inventory lookup."
 requires-python = ">=3.11"
 dependencies = [
