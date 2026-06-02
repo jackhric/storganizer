@@ -4,20 +4,18 @@ import { XIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useFindStore } from "@/lib/stores/find";
-import { pb } from "@/lib/api/client";
+import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
-import type { ItemsTyped } from "@/types/items";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  items: ItemsTyped[];
+  items: ItemRead[];
 };
 
 const MAX_THUMBS = 5;
 
-function Thumb({ item, size = "md" }: { item: ItemsTyped; size?: "sm" | "md" }) {
-  const url = item.image
-    ? pb.files.getURL(item, item.image, { thumb: "80x80" })
-    : null;
+function Thumb({ item, size = "md" }: { item: ItemRead; size?: "sm" | "md" }) {
+  const url = item.image ? itemImageUrl(item.id, "80x80") : null;
   const dim = size === "sm" ? "h-7 w-7" : "h-8 w-8";
 
   return (

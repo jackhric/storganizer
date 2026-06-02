@@ -4,10 +4,10 @@ import { useMemo } from "react";
 import { HardDriveIcon } from "lucide-react";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { cn } from "@/lib/utils";
-import type { DevicesResponse } from "@/lib/api/types";
+import type { DeviceRead as Device } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  devices: DevicesResponse[];
+  devices: Device[];
   value: string[];
   onChange: (next: string[]) => void;
 };

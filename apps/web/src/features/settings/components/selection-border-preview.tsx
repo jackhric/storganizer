@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { ShuffleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { pb } from "@/lib/api/client";
-import { useItems } from "@/features/items/hooks/use-items";
+import { itemImageUrl } from "@/lib/api/urls";
+import { useListItems } from "@/lib/api/generated/items";
 import { useSelectionBorderStore } from "@/lib/stores/selection-border";
 
 export function SelectionBorderPreview() {
-  const { data: items } = useItems();
+  const { data: items } = useListItems();
   const style = useSelectionBorderStore((s) => s.style);
   const [seed, setSeed] = useState(0);
 
@@ -20,10 +20,7 @@ export function SelectionBorderPreview() {
     if (pool.length > 0) setSeed(Math.floor(Math.random() * pool.length));
   }, [pool.length]);
 
-  const imageUrl =
-    pick && pick.image
-      ? pb.files.getURL(pick, pick.image, { thumb: "400x400" })
-      : null;
+  const imageUrl = pick && pick.image ? itemImageUrl(pick.id, "400x400") : null;
 
   return (
     <div className="flex items-center gap-4 rounded-lg border border-border bg-background p-4">

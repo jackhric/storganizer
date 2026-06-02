@@ -3,24 +3,21 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { motion } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { pb } from "@/lib/api/client";
+import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
 import type { Rgb } from "@/lib/color/oklch";
 import type {
-  AssignmentsResponse,
-  CellsResponse,
-  DevicesResponse,
-  ItemsResponse,
-} from "@/lib/api/types";
-import type { AssignmentWithItemExpand } from "@/lib/api/collections";
-
-type AssignmentWithItem = AssignmentsResponse<AssignmentWithItemExpand>;
+  AssignmentByDevice,
+  CellRead as Cell,
+  DeviceRead as Device,
+  ItemWithTags,
+} from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  device: DevicesResponse;
-  cells: CellsResponse[] | undefined;
+  device: Device;
+  cells: Cell[] | undefined;
   isLoading?: boolean;
-  assignmentsByCellId: Map<string, AssignmentWithItem>;
+  assignmentsByCellId: Map<string, AssignmentByDevice>;
   cellColors: Map<number, Rgb>;
   onCellHoverChange: (ledIndex: number | null) => void;
   selectedCellId: string | null;
@@ -88,14 +85,14 @@ function DroppableCell({
   isSelected,
   onSelect,
 }: {
-  cell: CellsResponse;
-  assignment: AssignmentWithItem | undefined;
+  cell: Cell;
+  assignment: AssignmentByDevice | undefined;
   onHoverChange: (ledIndex: number | null) => void;
   color: Rgb | null;
   isSelected: boolean;
   onSelect: (cellId: string) => void;
 }) {
-  const item = assignment?.expand?.item_id;
+  const item = assignment?.item;
 
   const { isOver, setNodeRef: setDropRef } = useDroppable({
     id: `cell-${cell.id}`,
@@ -162,10 +159,8 @@ function DroppableCell({
   );
 }
 
-function CellContent({ item }: { item: ItemsResponse }) {
-  const imageUrl = item.image
-    ? pb.files.getURL(item, item.image, { thumb: "400x400" })
-    : null;
+function CellContent({ item }: { item: ItemWithTags }) {
+  const imageUrl = item.image ? itemImageUrl(item.id, "400x400") : null;
 
   return (
     <>

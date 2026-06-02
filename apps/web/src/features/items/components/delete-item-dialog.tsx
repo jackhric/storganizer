@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,20 +11,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useDeleteItem } from "../hooks/use-items";
-import type { ItemsTyped } from "@/types/items";
+import {
+  getListItemsQueryKey,
+  useDeleteItem,
+} from "@/lib/api/generated/items";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
 
 interface Props {
-  item: ItemsTyped | null;
+  item: ItemRead | null;
   onOpenChange: (open: boolean) => void;
 }
 
 export function DeleteItemDialog({ item, onOpenChange }: Props) {
-  const { mutateAsync, isPending } = useDeleteItem();
+  const qc = useQueryClient();
+  const { mutateAsync, isPending } = useDeleteItem({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: getListItemsQueryKey() }),
+    },
+  });
 
   async function handleConfirm() {
     if (!item) return;
-    await mutateAsync(item.id);
+    await mutateAsync({ itemId: item.id });
     onOpenChange(false);
   }
 

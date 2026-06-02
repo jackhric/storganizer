@@ -15,7 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCreateDevice, parseDeviceErrors } from "../hooks/use-devices";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getListDevicesQueryKey,
+  useCreateDevice,
+} from "@/lib/api/generated/devices";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -24,13 +28,30 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+type DeviceFieldErrors = Partial<Record<"name" | "url", string>>;
+
+function parseDeviceErrors(error: unknown): DeviceFieldErrors {
+  if (!error || typeof error !== "object") return {};
+  const detail = (error as { detail?: unknown }).detail;
+  if (typeof detail === "string") {
+    if (detail.toLowerCase().includes("reach")) return { url: detail };
+    if (detail.toLowerCase().includes("duplicate")) return { name: detail };
+  }
+  return {};
+}
+
 interface AddDeviceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function AddDeviceDialog({ open, onOpenChange }: AddDeviceDialogProps) {
-  const { mutateAsync, isPending } = useCreateDevice();
+  const qc = useQueryClient();
+  const { mutateAsync, isPending } = useCreateDevice({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: getListDevicesQueryKey() }),
+    },
+  });
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -45,7 +66,7 @@ export function AddDeviceDialog({ open, onOpenChange }: AddDeviceDialogProps) {
     setSubmitError(null);
     const url = /^https?:\/\//i.test(values.url) ? values.url : `http://${values.url}`;
     try {
-      await mutateAsync({ name: values.name, url });
+      await mutateAsync({ data: { name: values.name, url } });
       reset();
       onOpenChange(false);
     } catch (err) {

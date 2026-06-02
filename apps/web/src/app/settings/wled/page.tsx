@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQueryClient } from "@tanstack/react-query";
 import { AddDeviceDialog } from "@/features/devices/components/add-device-dialog";
-import { useDevices, useDeleteDevice, useUpdateDevice, useRefreshDevices } from "@/features/devices/hooks/use-devices";
-import type { DevicesResponse } from "@/lib/api/types";
+import {
+  getListDevicesQueryKey,
+  useDeleteDevice,
+  useListDevices,
+  useRefreshDevices,
+  useUpdateDevice,
+} from "@/lib/api/generated/devices";
+import type { DeviceRead } from "@/lib/api/generated/storganizerAPI.schemas";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -21,10 +28,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-function DeviceDetail({ device, onDeleted }: { device: DevicesResponse; onDeleted: () => void }) {
+const DEVICES_KEY = getListDevicesQueryKey();
+
+function DeviceDetail({ device, onDeleted }: { device: DeviceRead; onDeleted: () => void }) {
   const hasGrid = device.grid_width > 0 && device.grid_height > 0;
-  const { mutate: deleteDevice, isPending: isDeleting } = useDeleteDevice();
-  const { mutate: updateDevice, isPending: isRenaming } = useUpdateDevice();
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: DEVICES_KEY });
+  const { mutate: deleteDevice, isPending: isDeleting } = useDeleteDevice({
+    mutation: { onSuccess: invalidate },
+  });
+  const { mutate: updateDevice, isPending: isRenaming } = useUpdateDevice({
+    mutation: { onSuccess: invalidate },
+  });
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(device.name);
@@ -37,7 +52,7 @@ function DeviceDetail({ device, onDeleted }: { device: DevicesResponse; onDelete
   function commitRename() {
     const trimmed = draftName.trim();
     if (trimmed && trimmed !== device.name) {
-      updateDevice({ id: device.id, data: { name: trimmed } });
+      updateDevice({ deviceId: device.id, data: { name: trimmed } });
     }
     setEditingName(false);
   }
@@ -48,7 +63,15 @@ function DeviceDetail({ device, onDeleted }: { device: DevicesResponse; onDelete
   }
 
   function handleDelete() {
-    deleteDevice(device.id, { onSuccess: onDeleted });
+    deleteDevice(
+      { deviceId: device.id },
+      {
+        onSuccess: () => {
+          invalidate();
+          onDeleted();
+        },
+      },
+    );
   }
 
   return (
@@ -182,10 +205,13 @@ function EmptyDetail() {
 }
 
 export default function WledSettingsPage() {
+  const qc = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { data: devices = [] } = useDevices();
-  const { mutate: refresh, isPending: isRefreshing } = useRefreshDevices();
+  const { data: devices = [] } = useListDevices();
+  const { mutate: refresh, isPending: isRefreshing } = useRefreshDevices({
+    mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: DEVICES_KEY }) },
+  });
 
   const selected = devices.find((d) => d.id === selectedId) ?? null;
 
@@ -206,7 +232,7 @@ export default function WledSettingsPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => refresh()}
+              onClick={() => refresh(undefined)}
               disabled={isRefreshing || devices.length === 0}
               aria-label="Refresh devices"
               title="Refresh devices"

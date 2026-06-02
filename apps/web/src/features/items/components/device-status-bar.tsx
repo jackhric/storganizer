@@ -1,10 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { DevicesResponse } from "@/lib/api/types";
+import type { DeviceRead as Device } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  devices: DevicesResponse[];
+  devices: Device[];
 };
 
 export function DeviceStatusBar({ devices }: Props) {

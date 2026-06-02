@@ -13,13 +13,13 @@ import { DeviceStatusBar } from "@/features/items/components/device-status-bar";
 import { SelectionBar } from "@/features/items/components/selection-bar";
 import { TagsFilter } from "@/features/tags/components/tags-filter";
 import { DevicesFilter } from "@/features/devices/components/devices-filter";
-import { useItems } from "@/features/items/hooks/use-items";
-import { useDevices } from "@/features/devices/hooks/use-devices";
-import { useTags } from "@/features/tags/hooks/use-tags";
+import { useListDevices } from "@/lib/api/generated/devices";
+import { useListItems } from "@/lib/api/generated/items";
+import { useListTags } from "@/lib/api/generated/tags";
 import { useFindStore } from "@/lib/stores/find";
 import type { WarlsFrame } from "@/lib/wled/use-warls";
 import type { Rgb } from "@/lib/color/oklch";
-import type { ItemsTyped } from "@/types/items";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
 
 const HIGHLIGHT_COLOR: Rgb = { r: 255, g: 140, b: 0 };
 
@@ -27,12 +27,12 @@ export default function HomePage() {
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [activeDevices, setActiveDevices] = useState<string[]>([]);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ItemsTyped | undefined>(undefined);
-  const [deletingItem, setDeletingItem] = useState<ItemsTyped | null>(null);
+  const [editingItem, setEditingItem] = useState<ItemRead | undefined>(undefined);
+  const [deletingItem, setDeletingItem] = useState<ItemRead | null>(null);
 
-  const { data: items, isLoading: itemsLoading } = useItems();
-  const { data: devices } = useDevices();
-  const { data: tags } = useTags();
+  const { data: items, isLoading: itemsLoading } = useListItems();
+  const { data: devices } = useListDevices();
+  const { data: tags } = useListTags();
   const gridRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(0);
 
@@ -61,13 +61,12 @@ export default function HomePage() {
     const deviceSet = new Set(activeDevices);
     return items.filter((item) => {
       if (activeTags.length > 0) {
-        const ids = Array.isArray(item.tags) ? item.tags : [];
-        if (!activeTags.every((id) => ids.includes(id))) return false;
+        const tagIds = (item.tags ?? []).map((t) => t.id);
+        if (!activeTags.every((id) => tagIds.includes(id))) return false;
       }
       if (deviceSet.size > 0) {
-        const assignments = item.expand?.assignments_via_item_id ?? [];
-        const onDevice = assignments.some((a) => {
-          const id = a.expand?.cell_id?.device_id;
+        const onDevice = (item.assignments ?? []).some((a) => {
+          const id = a.cell?.device_id;
           return id ? deviceSet.has(id) : false;
         });
         if (!onDevice) return false;
@@ -76,14 +75,14 @@ export default function HomePage() {
     });
   }, [items, activeTags, activeDevices]);
 
-  function handleFind(item: ItemsTyped) {
+  function handleFind(item: ItemRead) {
     if (selections.has(item.id)) {
       removeSelection(item.id);
       return;
     }
     const frame: WarlsFrame = new Map();
-    for (const a of item.expand?.assignments_via_item_id ?? []) {
-      const cell = a.expand?.cell_id;
+    for (const a of item.assignments ?? []) {
+      const cell = a.cell;
       if (!cell) continue;
       let perDevice = frame.get(cell.device_id);
       if (!perDevice) {
@@ -98,10 +97,10 @@ export default function HomePage() {
 
   const selectedItems = useMemo(() => {
     if (!items || selections.size === 0) return [];
-    return items.filter((i) => selections.has(i.id)) as ItemsTyped[];
+    return items.filter((i) => selections.has(i.id));
   }, [items, selections]);
 
-  function handleEdit(item: ItemsTyped) {
+  function handleEdit(item: ItemRead) {
     setEditingItem(item);
     setFormOpen(true);
   }
@@ -111,38 +110,42 @@ export default function HomePage() {
     if (!open) setEditingItem(undefined);
   }
 
+  const hasDevices = devices && devices.length > 0;
+
   return (
     <div className="flex min-h-full flex-col gap-6">
       {/* Header row */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {items ? `${items.length} item${items.length !== 1 ? "s" : ""}` : "Loading…"}
-            </p>
+      {hasDevices && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-6">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {items ? `${items.length} item${items.length !== 1 ? "s" : ""}` : "Loading…"}
+              </p>
+            </div>
+            <SelectionBar items={selectedItems} />
           </div>
-          <SelectionBar items={selectedItems} />
-        </div>
 
-        <div className="flex items-center gap-3">
-          {devices && <DeviceStatusBar devices={devices} />}
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={clearSelections}
-            disabled={selections.size === 0}
-            className="gap-1.5 text-muted-foreground hover:text-foreground"
-          >
-            <ZapOffIcon className="h-3.5 w-3.5" />
-            Clear LEDs
-          </Button>
-          <Button size="lg" onClick={() => setFormOpen(true)} className="gap-1.5">
-            <PlusIcon className="h-3.5 w-3.5" />
-            Add item
-          </Button>
+          <div className="flex items-center gap-3">
+            <DeviceStatusBar devices={devices} />
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={clearSelections}
+              disabled={selections.size === 0}
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <ZapOffIcon className="h-3.5 w-3.5" />
+              Clear LEDs
+            </Button>
+            <Button size="lg" onClick={() => setFormOpen(true)} className="gap-1.5">
+              <PlusIcon className="h-3.5 w-3.5" />
+              Add item
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Filter bar */}
       {items && items.length > 0 && (
@@ -230,7 +233,7 @@ export default function HomePage() {
           {filtered.map((item) => (
             <ItemCard
               key={item.id}
-              item={item as ItemsTyped}
+              item={item}
               onHighlight={handleFind}
               isHighlighting={selections.has(item.id)}
               onEdit={handleEdit}

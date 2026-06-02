@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { deterministicColor } from "@/lib/tags";
-import type { TagsResponse } from "@/lib/api/types";
+import type { TagRead as Tag } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  tag: TagsResponse;
+  tag: Tag;
   itemCount: number;
   selected: boolean;
   onSelectChange: (next: boolean) => void;

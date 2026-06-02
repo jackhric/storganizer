@@ -11,8 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useQueryClient } from "@tanstack/react-query";
 import { randomTagColor } from "@/lib/tags";
-import { useCreateTag } from "../hooks/use-tags";
+import {
+  getListTagsQueryKey,
+  useCreateTag,
+} from "@/lib/api/generated/tags";
 
 type Props = {
   open: boolean;
@@ -20,10 +24,15 @@ type Props = {
 };
 
 export function AddTagDialog({ open, onOpenChange }: Props) {
+  const qc = useQueryClient();
   const [name, setName] = useState("");
   const [color, setColor] = useState(randomTagColor());
   const [error, setError] = useState<string | null>(null);
-  const createTag = useCreateTag();
+  const createTag = useCreateTag({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: getListTagsQueryKey() }),
+    },
+  });
 
   useEffect(() => {
     if (open) {
@@ -40,7 +49,7 @@ export function AddTagDialog({ open, onOpenChange }: Props) {
       return;
     }
     try {
-      await createTag.mutateAsync({ name: trimmed, color });
+      await createTag.mutateAsync({ data: { name: trimmed, color } });
       onOpenChange(false);
     } catch {
       setError("A tag with this name already exists.");

@@ -7,11 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { DevicesResponse } from "@/lib/api/types";
+import type { DeviceRead as Device } from "@/lib/api/generated/storganizerAPI.schemas";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  devices: DevicesResponse[] | undefined;
+  devices: Device[] | undefined;
   selectedId: string | null;
   onSelect: (id: string) => void;
 };

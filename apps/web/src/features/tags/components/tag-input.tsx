@@ -6,8 +6,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { deterministicColor, randomTagColor, readableForeground } from "@/lib/tags";
-import { useCreateTag, useTags, useUpdateTag } from "../hooks/use-tags";
-import type { TagsResponse } from "@/lib/api/types";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getListItemsQueryKey,
+} from "@/lib/api/generated/items";
+import {
+  getListTagsQueryKey,
+  useCreateTag,
+  useListTags,
+  useUpdateTag,
+} from "@/lib/api/generated/tags";
+import type { TagRead as Tag } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
   value: string[];
@@ -15,14 +24,19 @@ type Props = {
 };
 
 export function TagInput({ value, onChange }: Props) {
+  const qc = useQueryClient();
   const [input, setInput] = useState("");
   const [focused, setFocused] = useState(false);
-  const { data: tags } = useTags();
-  const createTag = useCreateTag();
-  const updateTag = useUpdateTag();
+  const { data: tags } = useListTags();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: getListTagsQueryKey() });
+    qc.invalidateQueries({ queryKey: getListItemsQueryKey() });
+  };
+  const createTag = useCreateTag({ mutation: { onSuccess: invalidate } });
+  const updateTag = useUpdateTag({ mutation: { onSuccess: invalidate } });
 
   const tagsById = useMemo(() => {
-    const m = new Map<string, TagsResponse>();
+    const m = new Map<string, Tag>();
     for (const t of tags ?? []) m.set(t.id, t);
     return m;
   }, [tags]);
@@ -50,7 +64,9 @@ export function TagInput({ value, onChange }: Props) {
       return;
     }
     try {
-      const created = await createTag.mutateAsync({ name: t, color: randomTagColor() });
+      const created = await createTag.mutateAsync({
+        data: { name: t, color: randomTagColor() },
+      });
       onChange([...value, created.id]);
     } finally {
       setInput("");
@@ -68,7 +84,7 @@ export function TagInput({ value, onChange }: Props) {
   }
 
   function handleColorChange(id: string, color: string) {
-    updateTag.mutate({ id, data: { color } });
+    updateTag.mutate({ tagId: id, data: { color } });
   }
 
   const showSuggestions = focused;

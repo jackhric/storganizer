@@ -18,9 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { pb } from "@/lib/api/client";
+import { itemImageUrl } from "@/lib/api/urls";
 import { useCreateItem, useUpdateItem } from "../hooks/use-items";
-import type { ExternalLink, ItemsTyped } from "@/types/items";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
+
+type ExternalLink = { label: string; url: string };
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -33,7 +35,7 @@ type FormValues = z.infer<typeof schema>;
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item?: ItemsTyped;
+  item?: ItemRead;
 }
 
 export function ItemFormDialog({ open, onOpenChange, item }: Props) {
@@ -63,11 +65,13 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
           store_url: item.store_url ?? "",
           notes: item.notes ?? "",
         });
-        setTags(Array.isArray(item.tags) ? item.tags : []);
-        setLinks(Array.isArray(item.external_links) ? item.external_links : []);
-        setImagePreview(
-          item.image ? pb.files.getURL(item, item.image, { thumb: "400x400" }) : null
+        setTags((item.tags ?? []).map((t) => t.id));
+        setLinks(
+          Array.isArray(item.external_links)
+            ? (item.external_links as ExternalLink[])
+            : [],
         );
+        setImagePreview(item.image ? itemImageUrl(item.id, "400x400") : null);
       } else {
         reset({ name: "", store_url: "", notes: "" });
         setTags([]);
@@ -94,19 +98,20 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
     const validLinks = links.filter((l) => l.label.trim() && l.url.trim());
-    const payload = new FormData();
-    payload.append("name", values.name);
-    if (values.store_url) payload.append("store_url", values.store_url);
-    if (values.notes) payload.append("notes", values.notes);
-    payload.append("tags", JSON.stringify(tags));
-    payload.append("external_links", JSON.stringify(validLinks));
-    if (imageFile) payload.append("image", imageFile);
+    const payload = {
+      name: values.name,
+      store_url: values.store_url ?? "",
+      notes: values.notes ?? "",
+      tags,
+      external_links: validLinks,
+      image: imageFile,
+    };
 
     try {
       if (isEdit) {
-        await updateMutation.mutateAsync({ id: item.id, data: payload as never });
+        await updateMutation.mutateAsync({ id: item.id, payload });
       } else {
-        await createMutation.mutateAsync(payload as never);
+        await createMutation.mutateAsync(payload);
       }
       onOpenChange(false);
     } catch {

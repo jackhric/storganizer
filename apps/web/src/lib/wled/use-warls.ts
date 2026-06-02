@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { pb } from "@/lib/api/client";
 import type { Rgb } from "@/lib/color/oklch";
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8090";
 
 // Throttle send rate to ~30 fps. The backend handles WARLS keepalive itself
 // (re-sending the last frame to WLED every ~300ms), so this throttle only
@@ -39,7 +41,7 @@ export function useWarls(frame: WarlsFrame | null): void {
   // Open the socket once per consumer lifetime. The session is identified
   // purely by the connection itself.
   useEffect(() => {
-    const wsUrl = pb.baseURL.replace(/^http/, "ws") + "/api/warls/stream";
+    const wsUrl = BACKEND_URL.replace(/^http/, "ws") + "/api/warls/stream";
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 

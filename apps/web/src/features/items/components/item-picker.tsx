@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 import { CheckIcon, SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { pb } from "@/lib/api/client";
+import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
-import type { ItemsTyped } from "@/types/items";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  items: ItemsTyped[];
+  items: ItemRead[];
   value: string[];
   onChange: (next: string[]) => void;
 };
@@ -49,9 +49,7 @@ export function ItemPicker({ items, value, onChange }: Props) {
         ) : (
           filtered.map((item) => {
             const isSelected = selected.has(item.id);
-            const url = item.image
-              ? pb.files.getURL(item, item.image, { thumb: "80x80" })
-              : null;
+            const url = item.image ? itemImageUrl(item.id, "80x80") : null;
             return (
               <button
                 key={item.id}

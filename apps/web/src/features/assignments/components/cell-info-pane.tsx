@@ -7,16 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { pb } from "@/lib/api/client";
-import type { AssignmentsResponse, CellsResponse, DevicesResponse } from "@/lib/api/types";
-import type { AssignmentWithItemExpand } from "@/lib/api/collections";
-
-type AssignmentWithItem = AssignmentsResponse<AssignmentWithItemExpand>;
+import { itemImageUrl } from "@/lib/api/urls";
+import type {
+  AssignmentByDevice,
+  CellRead as Cell,
+  DeviceRead as Device,
+} from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  device: DevicesResponse | null;
-  selectedCell: CellsResponse | null;
-  assignment: AssignmentWithItem | undefined;
+  device: Device | null;
+  selectedCell: Cell | null;
+  assignment: AssignmentByDevice | undefined;
   onUpdateQuantity: (assignmentId: string, quantity: number) => void;
   onRemoveAssignment: (assignmentId: string) => void;
 };
@@ -69,7 +70,7 @@ function EmptySelection() {
   );
 }
 
-function LedSummary({ device, cell }: { device: DevicesResponse | null; cell: CellsResponse }) {
+function LedSummary({ device, cell }: { device: Device | null; cell: Cell }) {
   const width = device?.grid_width ?? 0;
   const row = width > 0 ? Math.floor(cell.led_index / width) : null;
   const col = width > 0 ? cell.led_index % width : null;
@@ -103,14 +104,12 @@ function OccupiedDetails({
   onUpdateQuantity,
   onRemoveAssignment,
 }: {
-  assignment: AssignmentWithItem;
+  assignment: AssignmentByDevice;
   onUpdateQuantity: (assignmentId: string, quantity: number) => void;
   onRemoveAssignment: (assignmentId: string) => void;
 }) {
-  const item = assignment.expand?.item_id;
-  const imageUrl = item?.image
-    ? pb.files.getURL(item, item.image, { thumb: "200x200" })
-    : null;
+  const item = assignment.item;
+  const imageUrl = item?.image ? itemImageUrl(item.id, "200x200") : null;
 
   // Local draft so the user can type freely; commit on blur or Enter.
   const [draft, setDraft] = useState(String(assignment.quantity));
@@ -150,9 +149,9 @@ function OccupiedDetails({
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-medium text-sm leading-tight">{item?.name ?? "Unknown item"}</p>
-          {(item?.expand?.tags?.length ?? 0) > 0 && (
+          {(item?.tags?.length ?? 0) > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
-              {item!.expand!.tags!.map((tag) => (
+              {item!.tags!.map((tag) => (
                 <Badge key={tag.id} variant="secondary" className="text-[10px] px-1.5 py-0">
                   {tag.name}
                 </Badge>

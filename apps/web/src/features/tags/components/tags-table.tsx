@@ -2,27 +2,36 @@
 
 import { useMemo } from "react";
 import { TagsRow } from "./tags-row";
-import { useDeleteTag, useUpdateTag } from "../hooks/use-tags";
-import type { TagsResponse } from "@/lib/api/types";
-import type { ItemsTyped } from "@/types/items";
+import { useQueryClient } from "@tanstack/react-query";
+import { getListItemsQueryKey } from "@/lib/api/generated/items";
+import {
+  getListTagsQueryKey,
+  useDeleteTag,
+  useUpdateTag,
+} from "@/lib/api/generated/tags";
+import type { ItemRead, TagRead as Tag } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  tags: TagsResponse[];
-  items: ItemsTyped[];
+  tags: Tag[];
+  items: ItemRead[];
   selected: Set<string>;
   onSelectChange: (id: string, next: boolean) => void;
   onSelectAll: (next: boolean) => void;
 };
 
 export function TagsTable({ tags, items, selected, onSelectChange, onSelectAll }: Props) {
-  const updateTag = useUpdateTag();
-  const deleteTag = useDeleteTag();
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: getListTagsQueryKey() });
+    qc.invalidateQueries({ queryKey: getListItemsQueryKey() });
+  };
+  const updateTag = useUpdateTag({ mutation: { onSuccess: invalidate } });
+  const deleteTag = useDeleteTag({ mutation: { onSuccess: invalidate } });
 
   const itemCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const item of items) {
-      const ids = Array.isArray(item.tags) ? item.tags : [];
-      for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
+      for (const t of item.tags ?? []) counts.set(t.id, (counts.get(t.id) ?? 0) + 1);
     }
     return counts;
   }, [items]);
@@ -72,9 +81,13 @@ export function TagsTable({ tags, items, selected, onSelectChange, onSelectAll }
                 itemCount={itemCounts.get(tag.id) ?? 0}
                 selected={selected.has(tag.id)}
                 onSelectChange={(next) => onSelectChange(tag.id, next)}
-                onRename={(name) => updateTag.mutate({ id: tag.id, data: { name } })}
-                onColorChange={(color) => updateTag.mutate({ id: tag.id, data: { color } })}
-                onDelete={() => deleteTag.mutate(tag.id)}
+                onRename={(name) =>
+                  updateTag.mutate({ tagId: tag.id, data: { name } })
+                }
+                onColorChange={(color) =>
+                  updateTag.mutate({ tagId: tag.id, data: { color } })
+                }
+                onDelete={() => deleteTag.mutate({ tagId: tag.id })}
               />
             ))
           )}

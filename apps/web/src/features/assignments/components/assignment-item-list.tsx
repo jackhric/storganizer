@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
-import { pb } from "@/lib/api/client";
+import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
-import type { ItemsTyped } from "@/types/items";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  items: ItemsTyped[] | undefined;
+  items: ItemRead[] | undefined;
   isLoading?: boolean;
 };
 
@@ -78,15 +78,13 @@ export function AssignmentItemList({ items, isLoading }: Props) {
   );
 }
 
-function DraggableItemRow({ item }: { item: ItemsTyped }) {
+function DraggableItemRow({ item }: { item: ItemRead }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `item-${item.id}`,
     data: { itemId: item.id },
   });
 
-  const imageUrl = item.image
-    ? pb.files.getURL(item, item.image, { thumb: "80x80" })
-    : null;
+  const imageUrl = item.image ? itemImageUrl(item.id, "80x80") : null;
 
   return (
     <li

@@ -2,24 +2,29 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragOverEvent, type DragStartEvent, type Modifier } from "@dnd-kit/core";
+import { useQueryClient } from "@tanstack/react-query";
 import { useWarls, type WarlsFrame } from "@/lib/wled/use-warls";
-import { pb } from "@/lib/api/client";
-import { AssignmentItemList } from "@/features/assignments/components/assignment-item-list";
-import { CellInfoPane } from "@/features/assignments/components/cell-info-pane";
-import { DeviceSelector } from "@/features/assignments/components/device-selector";
-import { GridPreview } from "@/features/assignments/components/grid-preview";
-import { useCellsByDevice } from "@/features/assignments/hooks/use-cells";
+import { itemImageUrl } from "@/lib/api/urls";
 import {
   useAssignmentsByDevice,
   useCreateAssignment,
   useDeleteAssignment,
   useMoveAssignment,
   useUpdateAssignment,
-} from "@/features/assignments/hooks/use-assignments";
-import { useDevices } from "@/features/devices/hooks/use-devices";
-import { useItems } from "@/features/items/hooks/use-items";
+} from "@/lib/api/generated/assignments";
+import { useListCells } from "@/lib/api/generated/cells";
+import { useListDevices } from "@/lib/api/generated/devices";
+import { getListItemsQueryKey, useListItems } from "@/lib/api/generated/items";
+import { AssignmentItemList } from "@/features/assignments/components/assignment-item-list";
+import { CellInfoPane } from "@/features/assignments/components/cell-info-pane";
+import { DeviceSelector } from "@/features/assignments/components/device-selector";
+import { GridPreview } from "@/features/assignments/components/grid-preview";
 import type { Rgb } from "@/lib/color/oklch";
-import type { ItemsTyped } from "@/types/items";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
+
+// Invalidating the parameterized by-device query key matches every variant
+// (orval emits ["/api/assignments/by-device/{device_id}", deviceId] under the hood).
+const ASSIGNMENTS_BY_DEVICE_KEY = ["/api/assignments/by-device"] as const;
 
 const COLOR_WHITE: Rgb = { r: 255, g: 255, b: 255 };
 const COLOR_ORANGE: Rgb = { r: 255, g: 140, b: 0 };
@@ -48,7 +53,7 @@ const snapCenterToCursor: Modifier = ({ activatorEvent, draggingNodeRect, transf
 
 export default function AssignmentsPage() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
-  const [activeItem, setActiveItem] = useState<ItemsTyped | null>(null);
+  const [activeItem, setActiveItem] = useState<ItemRead | null>(null);
   const [dragFromCellId, setDragFromCellId] = useState<string | null>(null);
   const [hoveredLed, setHoveredLed] = useState<number | null>(null);
   const [dragHoveredLed, setDragHoveredLed] = useState<number | null>(null);
@@ -56,15 +61,34 @@ export default function AssignmentsPage() {
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [breathPhase, setBreathPhase] = useState(0);
 
-  const { data: items, isLoading: itemsLoading } = useItems();
-  const { data: devices } = useDevices();
-  const { data: cells, isLoading: cellsLoading } = useCellsByDevice(selectedDeviceId);
-  const { data: assignments } = useAssignmentsByDevice(selectedDeviceId);
+  const qc = useQueryClient();
+  const invalidateAssignmentsAndItems = () => {
+    qc.invalidateQueries({ queryKey: ASSIGNMENTS_BY_DEVICE_KEY });
+    qc.invalidateQueries({ queryKey: getListItemsQueryKey() });
+  };
 
-  const createAssignment = useCreateAssignment();
-  const updateAssignment = useUpdateAssignment();
-  const deleteAssignment = useDeleteAssignment();
-  const moveAssignmentMutation = useMoveAssignment();
+  const { data: items, isLoading: itemsLoading } = useListItems();
+  const { data: devices } = useListDevices();
+  const { data: cells, isLoading: cellsLoading } = useListCells(
+    { device_id: selectedDeviceId ?? "" },
+    { query: { enabled: !!selectedDeviceId } },
+  );
+  const { data: assignments } = useAssignmentsByDevice(selectedDeviceId ?? "", {
+    query: { enabled: !!selectedDeviceId },
+  });
+
+  const createAssignment = useCreateAssignment({
+    mutation: { onSuccess: invalidateAssignmentsAndItems },
+  });
+  const updateAssignment = useUpdateAssignment({
+    mutation: { onSuccess: invalidateAssignmentsAndItems },
+  });
+  const deleteAssignment = useDeleteAssignment({
+    mutation: { onSuccess: invalidateAssignmentsAndItems },
+  });
+  const moveAssignmentMutation = useMoveAssignment({
+    mutation: { onSuccess: invalidateAssignmentsAndItems },
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
@@ -192,7 +216,7 @@ export default function AssignmentsPage() {
   function handleDragStart(event: DragStartEvent) {
     const itemId = event.active.data.current?.itemId as string | undefined;
     const fromCellId = event.active.data.current?.fromCellId as string | undefined;
-    const found = (items as ItemsTyped[] | undefined)?.find((i) => i.id === itemId) ?? null;
+    const found = items?.find((i) => i.id === itemId) ?? null;
     setActiveItem(found);
     setDragFromCellId(fromCellId ?? null);
     setHoveredLed(null);
@@ -218,16 +242,20 @@ export default function AssignmentsPage() {
 
     if (fromCellId) {
       if (fromCellId === cellId) return;
-      await moveAssignmentMutation.mutateAsync({ fromCellId, toCellId: cellId });
+      await moveAssignmentMutation.mutateAsync({
+        data: { from_cell_id: fromCellId, to_cell_id: cellId },
+      });
       return;
     }
 
     if (!itemId) return;
     const existing = assignmentsByCellId.get(cellId);
     if (existing) {
-      await deleteAssignment.mutateAsync(existing.id);
+      await deleteAssignment.mutateAsync({ assignmentId: existing.id });
     }
-    await createAssignment.mutateAsync({ cellId, itemId });
+    await createAssignment.mutateAsync({
+      data: { cell_id: cellId, item_id: itemId, quantity: 1 },
+    });
   }
 
   function handleDragCancel() {
@@ -251,7 +279,7 @@ export default function AssignmentsPage() {
     >
       <div className="flex h-full min-h-[calc(100vh-3rem)] flex-col lg:flex-row lg:divide-x lg:divide-border -m-6">
         <AssignmentItemList
-          items={items as ItemsTyped[] | undefined}
+          items={items}
           isLoading={itemsLoading}
         />
 
@@ -290,9 +318,14 @@ export default function AssignmentsPage() {
           device={selectedDevice}
           selectedCell={selectedCell}
           assignment={selectedAssignment}
-          onUpdateQuantity={(id, quantity) => updateAssignment.mutate({ id, data: { quantity } })}
+          onUpdateQuantity={(id, quantity) =>
+            updateAssignment.mutate({
+              assignmentId: id,
+              data: { quantity },
+            })
+          }
           onRemoveAssignment={(id) => {
-            deleteAssignment.mutate(id);
+            deleteAssignment.mutate({ assignmentId: id });
             setSelectedCellId(null);
           }}
         />
@@ -305,10 +338,8 @@ export default function AssignmentsPage() {
   );
 }
 
-function ItemDragGhost({ item }: { item: ItemsTyped }) {
-  const imageUrl = item.image
-    ? pb.files.getURL(item, item.image, { thumb: "100x100" })
-    : null;
+function ItemDragGhost({ item }: { item: ItemRead }) {
+  const imageUrl = item.image ? itemImageUrl(item.id, "100x100") : null;
   return (
     <div className="h-[100px] w-[100px] overflow-hidden rounded-md border border-border bg-muted shadow-lg cursor-grabbing opacity-70">
       {imageUrl ? (

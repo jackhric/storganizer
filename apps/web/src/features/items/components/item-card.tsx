@@ -6,13 +6,13 @@ import { ZapIcon, ZapOffIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, AlertTri
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { pb } from "@/lib/api/client";
+import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
 import { deterministicColor } from "@/lib/tags";
 import { useSelectionBorderStore } from "@/lib/stores/selection-border";
 import { useUpdateItem } from "@/features/items/hooks/use-items";
 import { TagDot, TagOverflowDot } from "@/features/tags/components/tag-dot";
-import type { ItemsTyped } from "@/types/items";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -25,20 +25,18 @@ const SPRING = { type: "spring" as const, stiffness: 800, damping: 22, mass: 0.7
 // -----------------------------------------------------------------------------
 
 type Props = {
-  item: ItemsTyped;
-  onHighlight?: (item: ItemsTyped) => void;
+  item: ItemRead;
+  onHighlight?: (item: ItemRead) => void;
   isHighlighting?: boolean;
-  onEdit?: (item: ItemsTyped) => void;
-  onDelete?: (item: ItemsTyped) => void;
+  onEdit?: (item: ItemRead) => void;
+  onDelete?: (item: ItemRead) => void;
 };
 
 export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }: Props) {
-  const imageUrl = item.image
-    ? pb.files.getURL(item, item.image, { thumb: "400x400" })
-    : null;
+  const imageUrl = item.image ? itemImageUrl(item.id, "400x400") : null;
 
-  const tags = item.expand?.tags ?? [];
-  const hasAssignment = (item.expand?.assignments_via_item_id?.length ?? 0) > 0;
+  const tags = item.tags ?? [];
+  const hasAssignment = (item.assignments ?? []).length > 0;
   const selectionBorder = useSelectionBorderStore((s) => s.style);
 
   const updateItem = useUpdateItem();
@@ -85,10 +83,8 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
       return;
     }
 
-    const payload = new FormData();
-    payload.append("image", file);
     try {
-      await updateItem.mutateAsync({ id: item.id, data: payload as never });
+      await updateItem.mutateAsync({ id: item.id, payload: { image: file } });
     } catch {
       setDropError("Upload failed");
       window.setTimeout(() => setDropError(null), 2500);

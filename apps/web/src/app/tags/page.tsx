@@ -7,16 +7,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TagsTable } from "@/features/tags/components/tags-table";
 import { TagBatchActions } from "@/features/tags/components/tag-batch-actions";
 import { AddTagDialog } from "@/features/tags/components/add-tag-dialog";
-import { useTags } from "@/features/tags/hooks/use-tags";
-import { useItems } from "@/features/items/hooks/use-items";
-import type { ItemsTyped } from "@/types/items";
+import { useListItems } from "@/lib/api/generated/items";
+import { useListTags } from "@/lib/api/generated/tags";
 
 export default function TagsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [addOpen, setAddOpen] = useState(false);
 
-  const { data: tags, isLoading: tagsLoading } = useTags();
-  const { data: items } = useItems();
+  const { data: tags, isLoading: tagsLoading } = useListTags();
+  const { data: items } = useListItems();
 
   const selectedTags = useMemo(
     () => (tags ?? []).filter((t) => selected.has(t.id)),
@@ -55,7 +54,7 @@ export default function TagsPage() {
       {selectedTags.length > 0 && (
         <TagBatchActions
           selectedTags={selectedTags}
-          items={(items ?? []) as ItemsTyped[]}
+          items={items ?? []}
           onClearSelection={() => setSelected(new Set())}
         />
       )}
@@ -69,7 +68,7 @@ export default function TagsPage() {
       ) : (
         <TagsTable
           tags={tags ?? []}
-          items={(items ?? []) as ItemsTyped[]}
+          items={items ?? []}
           selected={selected}
           onSelectChange={handleSelect}
           onSelectAll={handleSelectAll}

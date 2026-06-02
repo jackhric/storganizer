@@ -4,10 +4,10 @@ import { useMemo } from "react";
 import { TagIcon } from "lucide-react";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { deterministicColor } from "@/lib/tags";
-import type { TagsResponse } from "@/lib/api/types";
+import type { TagRead as Tag } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  available: TagsResponse[];
+  available: Tag[];
   value: string[];
   onChange: (next: string[]) => void;
 };

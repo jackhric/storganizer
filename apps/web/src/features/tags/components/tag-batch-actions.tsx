@@ -19,20 +19,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { ItemPicker } from "@/features/items/components/item-picker";
 import {
   useApplyTagsToItems,
-  useDeleteTag,
   useMergeTags,
   useRemoveTagsFromItems,
 } from "../hooks/use-tags";
+import { getListItemsQueryKey } from "@/lib/api/generated/items";
+import {
+  getListTagsQueryKey,
+  useDeleteTag,
+} from "@/lib/api/generated/tags";
 import { deterministicColor } from "@/lib/tags";
-import type { TagsResponse } from "@/lib/api/types";
-import type { ItemsTyped } from "@/types/items";
+import type { ItemRead, TagRead as Tag } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
-  selectedTags: TagsResponse[];
-  items: ItemsTyped[];
+  selectedTags: Tag[];
+  items: ItemRead[];
   onClearSelection: () => void;
 };
 
@@ -45,10 +49,18 @@ export function TagBatchActions({ selectedTags, items, onClearSelection }: Props
   const [pickedItems, setPickedItems] = useState<string[]>([]);
   const [mergeTargetId, setMergeTargetId] = useState<string | null>(null);
 
+  const qc = useQueryClient();
   const applyMutation = useApplyTagsToItems();
   const removeMutation = useRemoveTagsFromItems();
   const mergeMutation = useMergeTags();
-  const deleteMutation = useDeleteTag();
+  const deleteMutation = useDeleteTag({
+    mutation: {
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: getListTagsQueryKey() });
+        qc.invalidateQueries({ queryKey: getListItemsQueryKey() });
+      },
+    },
+  });
 
   const selectedIds = selectedTags.map((t) => t.id);
   const canMerge = selectedTags.length === 2;
@@ -90,7 +102,7 @@ export function TagBatchActions({ selectedTags, items, onClearSelection }: Props
 
   async function confirmDelete() {
     for (const id of selectedIds) {
-      await deleteMutation.mutateAsync(id);
+      await deleteMutation.mutateAsync({ tagId: id });
     }
     setDeleteOpen(false);
     onClearSelection();

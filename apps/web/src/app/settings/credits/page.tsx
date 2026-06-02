@@ -27,7 +27,7 @@ const frontend: Credit[] = [
   { name: "clsx", description: "Class name utility", license: "MIT", href: "https://github.com/lukeed/clsx" },
   { name: "tailwind-merge", description: "Tailwind class merging", license: "MIT", href: "https://github.com/dcastil/tailwind-merge" },
   { name: "class-variance-authority", description: "Variant API", license: "Apache-2.0", href: "https://github.com/joe-bell/cva" },
-  { name: "PocketBase JS SDK", description: "Backend client", license: "MIT", href: "https://github.com/pocketbase/js-sdk" },
+  { name: "orval", description: "OpenAPI → typed React Query hook codegen", license: "MIT", href: "https://github.com/orval-labs/orval" },
 ];
 
 const inspiration: Credit[] = [
@@ -35,11 +35,12 @@ const inspiration: Credit[] = [
 ];
 
 const backend: Credit[] = [
-  { name: "PocketBase", description: "Backend framework", license: "MIT", href: "https://github.com/pocketbase/pocketbase" },
-  { name: "Go", description: "Programming language", license: "BSD-3-Clause", href: "https://github.com/golang/go" },
-  { name: "coder/websocket", description: "WebSocket library", license: "ISC", href: "https://github.com/coder/websocket" },
-  { name: "disintegration/imaging", description: "Image processing", license: "MIT", href: "https://github.com/disintegration/imaging" },
-  { name: "modernc.org/sqlite", description: "Pure-Go SQLite driver", license: "BSD-3-Clause", href: "https://gitlab.com/cznic/sqlite" },
+  { name: "FastAPI", description: "Web framework", license: "MIT", href: "https://github.com/fastapi/fastapi" },
+  { name: "SQLAlchemy", description: "ORM", license: "MIT", href: "https://github.com/sqlalchemy/sqlalchemy" },
+  { name: "Pydantic", description: "Data validation", license: "MIT", href: "https://github.com/pydantic/pydantic" },
+  { name: "Alembic", description: "Database migrations", license: "MIT", href: "https://github.com/sqlalchemy/alembic" },
+  { name: "Pillow", description: "Image processing", license: "MIT-CMU", href: "https://github.com/python-pillow/Pillow" },
+  { name: "aiosqlite", description: "Async SQLite driver", license: "MIT", href: "https://github.com/omnilib/aiosqlite" },
   { name: "WLED", description: "LED control firmware (HTTP/WARLS protocol)", license: "MIT", href: "https://github.com/Aircoookie/WLED" },
 ];
 
