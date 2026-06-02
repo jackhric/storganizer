@@ -34,7 +34,9 @@ async def create_device(data: DeviceCreate, db: AsyncSession = Depends(get_sessi
     try:
         return await service.create(db, name=data.name, url=data.url)
     except WLEDUnreachableError as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, _UNREACHABLE) from exc
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, _UNREACHABLE
+        ) from exc
 
 
 @router.get("", response_model=list[DeviceRead])
