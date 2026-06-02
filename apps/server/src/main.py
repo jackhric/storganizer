@@ -12,6 +12,7 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 from sqlalchemy.exc import IntegrityError
 
 import src.core.metadata  # noqa: F401 — populate Base.metadata
@@ -55,8 +56,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await heartbeat
 
 
+def _operation_id_from_route(route: APIRoute) -> str:
+    # Default operation_ids include path + method (e.g. list_devices_api_devices_get),
+    # which produces awful generated hook names. Use the route function name instead
+    # — it's already unique within an app and reads cleanly in client codegen.
+    return route.name
+
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="Storganizer API", version="0.2.0", lifespan=lifespan)
+    app = FastAPI(
+        title="Storganizer API",
+        version="0.2.0",
+        lifespan=lifespan,
+        generate_unique_id_function=_operation_id_from_route,
+    )
 
     app.add_middleware(
         CORSMiddleware,

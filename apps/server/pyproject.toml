@@ -5,7 +5,6 @@ description = "Storganizer backend — FastAPI + SQLAlchemy, drives WLED address
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.136",
-    "fastcrud>=0.22",
     "sqlalchemy[asyncio]>=2.0.30",
     "aiosqlite>=0.20",
     "alembic>=1.13",
