@@ -21,12 +21,11 @@ async def find_by_device(db: AsyncSession, device_id: str) -> list[Cell]:
     return list(result.scalars().all())
 
 
-async def sync_cells(db: AsyncSession, device_id: str) -> int:
-    """Ensure a cell exists for every LED on the device. Returns the total
-    cell count for the device after syncing."""
+async def sync_cells(db: AsyncSession, device_id: str) -> None:
+    """Ensure a cell exists for every LED on the device."""
     device = await db.get(Device, device_id)
     if device is None or device.led_count == 0:
-        return 0
+        return
 
     existing = await find_by_device(db, device_id)
     taken = {c.led_index for c in existing}
@@ -37,4 +36,3 @@ async def sync_cells(db: AsyncSession, device_id: str) -> int:
         db.add(Cell(device_id=device_id, led_index=index))
 
     await db.commit()
-    return len(await find_by_device(db, device_id))

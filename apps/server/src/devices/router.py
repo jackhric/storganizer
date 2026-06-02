@@ -13,6 +13,7 @@ hardware, and there are extra sync/refresh actions.
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.cells import service as cells_service
 from src.core.database import get_session
 from src.devices import service
 from src.devices.exceptions import WLEDUnreachableError
@@ -77,6 +78,7 @@ async def sync_device(device_id: str, db: AsyncSession = Depends(get_session)):
         ) from exc
     if device is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "device not found")
+    await cells_service.sync_cells(db, device.id)
     return DeviceSyncResult(
         led_count=device.led_count,
         grid_width=device.grid_width,
