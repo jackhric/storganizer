@@ -21,15 +21,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { ItemPicker } from "@/features/items/components/item-picker";
-import {
-  useApplyTagsToItems,
-  useMergeTags,
-  useRemoveTagsFromItems,
-} from "../hooks/use-tags";
 import { getListItemsQueryKey } from "@/lib/api/generated/items";
 import {
   getListTagsQueryKey,
+  useApplyTags,
   useDeleteTag,
+  useMergeTags,
+  useRemoveTags,
 } from "@/lib/api/generated/tags";
 import { deterministicColor } from "@/lib/tags";
 import type { ItemRead, TagRead as Tag } from "@/lib/api/generated/storganizerAPI.schemas";
@@ -50,16 +48,21 @@ export function TagBatchActions({ selectedTags, items, onClearSelection }: Props
   const [mergeTargetId, setMergeTargetId] = useState<string | null>(null);
 
   const qc = useQueryClient();
-  const applyMutation = useApplyTagsToItems();
-  const removeMutation = useRemoveTagsFromItems();
-  const mergeMutation = useMergeTags();
+  const invalidateItemsAndTags = () => {
+    qc.invalidateQueries({ queryKey: getListItemsQueryKey() });
+    qc.invalidateQueries({ queryKey: getListTagsQueryKey() });
+  };
+  const applyMutation = useApplyTags({
+    mutation: { onSuccess: invalidateItemsAndTags },
+  });
+  const removeMutation = useRemoveTags({
+    mutation: { onSuccess: invalidateItemsAndTags },
+  });
+  const mergeMutation = useMergeTags({
+    mutation: { onSuccess: invalidateItemsAndTags },
+  });
   const deleteMutation = useDeleteTag({
-    mutation: {
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: getListTagsQueryKey() });
-        qc.invalidateQueries({ queryKey: getListItemsQueryKey() });
-      },
-    },
+    mutation: { onSuccess: invalidateItemsAndTags },
   });
 
   const selectedIds = selectedTags.map((t) => t.id);
@@ -80,13 +83,17 @@ export function TagBatchActions({ selectedTags, items, onClearSelection }: Props
   }
 
   async function confirmApply() {
-    await applyMutation.mutateAsync({ tagIds: selectedIds, itemIds: pickedItems });
+    await applyMutation.mutateAsync({
+      data: { tag_ids: selectedIds, item_ids: pickedItems },
+    });
     setApplyOpen(false);
     onClearSelection();
   }
 
   async function confirmRemove() {
-    await removeMutation.mutateAsync({ tagIds: selectedIds, itemIds: pickedItems });
+    await removeMutation.mutateAsync({
+      data: { tag_ids: selectedIds, item_ids: pickedItems },
+    });
     setRemoveOpen(false);
     onClearSelection();
   }
@@ -95,7 +102,9 @@ export function TagBatchActions({ selectedTags, items, onClearSelection }: Props
     if (!mergeTargetId) return;
     const source = selectedTags.find((t) => t.id !== mergeTargetId);
     if (!source) return;
-    await mergeMutation.mutateAsync({ sourceId: source.id, targetId: mergeTargetId });
+    await mergeMutation.mutateAsync({
+      data: { source_id: source.id, target_id: mergeTargetId },
+    });
     setMergeOpen(false);
     onClearSelection();
   }

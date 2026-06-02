@@ -26,6 +26,8 @@ import type {
 import type {
   HTTPValidationError,
   TagCreate,
+  TagItemsRequest,
+  TagMergeRequest,
   TagRead,
   TagUpdate
 } from './storganizerAPI.schemas';
@@ -445,4 +447,211 @@ export const useDeleteTag = <TError = HTTPValidationError,
         TContext
       > => {
       return useMutation(getDeleteTagMutationOptions(options), queryClient);
+    }
+    export const getApplyTagsUrl = () => {
+
+
+
+
+  return `/api/tags/apply`
+}
+
+/**
+ * @summary Apply Tags
+ */
+export const applyTags = async (tagItemsRequest: TagItemsRequest, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getApplyTagsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(tagItemsRequest)
+  }
+);}
+
+
+
+
+export const getApplyTagsMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applyTags>>, TError,{data: TagItemsRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof applyTags>>, TError,{data: TagItemsRequest}, TContext> => {
+
+const mutationKey = ['applyTags'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof applyTags>>, {data: TagItemsRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  applyTags(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApplyTagsMutationResult = NonNullable<Awaited<ReturnType<typeof applyTags>>>
+    export type ApplyTagsMutationBody = TagItemsRequest
+    export type ApplyTagsMutationError = HTTPValidationError
+
+    /**
+ * @summary Apply Tags
+ */
+export const useApplyTags = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applyTags>>, TError,{data: TagItemsRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof applyTags>>,
+        TError,
+        {data: TagItemsRequest},
+        TContext
+      > => {
+      return useMutation(getApplyTagsMutationOptions(options), queryClient);
+    }
+    export const getRemoveTagsUrl = () => {
+
+
+
+
+  return `/api/tags/remove`
+}
+
+/**
+ * @summary Remove Tags
+ */
+export const removeTags = async (tagItemsRequest: TagItemsRequest, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getRemoveTagsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(tagItemsRequest)
+  }
+);}
+
+
+
+
+export const getRemoveTagsMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeTags>>, TError,{data: TagItemsRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeTags>>, TError,{data: TagItemsRequest}, TContext> => {
+
+const mutationKey = ['removeTags'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeTags>>, {data: TagItemsRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  removeTags(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveTagsMutationResult = NonNullable<Awaited<ReturnType<typeof removeTags>>>
+    export type RemoveTagsMutationBody = TagItemsRequest
+    export type RemoveTagsMutationError = HTTPValidationError
+
+    /**
+ * @summary Remove Tags
+ */
+export const useRemoveTags = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeTags>>, TError,{data: TagItemsRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeTags>>,
+        TError,
+        {data: TagItemsRequest},
+        TContext
+      > => {
+      return useMutation(getRemoveTagsMutationOptions(options), queryClient);
+    }
+    export const getMergeTagsUrl = () => {
+
+
+
+
+  return `/api/tags/merge`
+}
+
+/**
+ * @summary Merge Tags
+ */
+export const mergeTags = async (tagMergeRequest: TagMergeRequest, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getMergeTagsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(tagMergeRequest)
+  }
+);}
+
+
+
+
+export const getMergeTagsMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mergeTags>>, TError,{data: TagMergeRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mergeTags>>, TError,{data: TagMergeRequest}, TContext> => {
+
+const mutationKey = ['mergeTags'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mergeTags>>, {data: TagMergeRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  mergeTags(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MergeTagsMutationResult = NonNullable<Awaited<ReturnType<typeof mergeTags>>>
+    export type MergeTagsMutationBody = TagMergeRequest
+    export type MergeTagsMutationError = HTTPValidationError
+
+    /**
+ * @summary Merge Tags
+ */
+export const useMergeTags = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mergeTags>>, TError,{data: TagMergeRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof mergeTags>>,
+        TError,
+        {data: TagMergeRequest},
+        TContext
+      > => {
+      return useMutation(getMergeTagsMutationOptions(options), queryClient);
     }

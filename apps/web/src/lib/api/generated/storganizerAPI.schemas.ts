@@ -174,6 +174,16 @@ export interface TagCreate {
   color?: string;
 }
 
+export interface TagItemsRequest {
+  tag_ids: string[];
+  item_ids: string[];
+}
+
+export interface TagMergeRequest {
+  source_id: string;
+  target_id: string;
+}
+
 export interface TagUpdate {
   name?: string | null;
   color?: string | null;
