@@ -16,3 +16,13 @@ class TagUpdate(BaseModel):
 class TagRead(TimestampedRead):
     name: str
     color: str
+
+
+class TagItemsRequest(BaseModel):
+    tag_ids: list[str]
+    item_ids: list[str]
+
+
+class TagMergeRequest(BaseModel):
+    source_id: str
+    target_id: str
