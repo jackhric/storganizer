@@ -1,0 +1,14 @@
+services:
+  storganizer:
+    image: ghcr.io/jackhric/storganizer:latest
+    container_name: storganizer
+    ports:
+      - "8090:8090"
+    volumes:
+      - storganizer-data:/app/data
+      - storganizer-storage:/app/storage
+    restart: unless-stopped
+
+volumes:
+  storganizer-data:
+  storganizer-storage:
