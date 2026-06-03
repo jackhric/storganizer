@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.0](https://github.com/jackhric/storganizer/compare/storganizer-v0.4.0...storganizer-v0.5.0) (2026-06-03)
+
+
+### Features
+
+* **assignments:** optimistic mutations, context menu, and drag-to-remove ([4cd12fe](https://github.com/jackhric/storganizer/commit/4cd12fe39ea4f161513ff44ab6f2ecb69fddf725))
+* **docker:** add docker-compose.yml for one-command deploy ([e9f90d4](https://github.com/jackhric/storganizer/commit/e9f90d49323c5716ba3e5630b51ef1d095873ee6))
+* **items:** add random items endpoint ([c7162f4](https://github.com/jackhric/storganizer/commit/c7162f4519430b0410683483ac4b9ddf9fdab996))
+* **lighting:** configurable highlight color and effects for found items ([50fc7e9](https://github.com/jackhric/storganizer/commit/50fc7e9160ec22000b7a91a38fba2f7f5e20d715))
+* **search:** wire global search to live results and selection ([696a31b](https://github.com/jackhric/storganizer/commit/696a31b7f495bbb6b3d91a049fbe3cea0212a004))
+* **settings:** add global lighting settings table and REST API ([dab3cf7](https://github.com/jackhric/storganizer/commit/dab3cf796194efa5c5557ba88f63f16297f65f9f))
+* **settings:** HSL accent picker with dark-mode auto-adjust ([c228d98](https://github.com/jackhric/storganizer/commit/c228d98ae2faae1fb5a84a256ecd8b79df61ba8f))
+
+
+### Bug Fixes
+
+* **images:** cache-bust item images with updated_at version ([0772625](https://github.com/jackhric/storganizer/commit/0772625c178ab3444423b6497a03d7f8aa12dbe7))
+* **readme:** point version badge at GitHub Releases ([e00b6ee](https://github.com/jackhric/storganizer/commit/e00b6ee34fb53027e4e02b9d76c0568aee603b54))
+* **readme:** replace broken license badge with static AGPL 3.0 ([8f38e62](https://github.com/jackhric/storganizer/commit/8f38e62468e489f0457dbb517d8d1d4de32fe415))
+
 ## [0.4.0](https://github.com/jackhric/storganizer/compare/storganizer-v0.3.0...storganizer-v0.4.0) (2026-06-02)
 
 
