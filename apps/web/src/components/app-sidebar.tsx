@@ -27,7 +27,11 @@ const nav = [
 ];
 
 export function AppSidebar() {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  // `trailingSlash: true` in next.config makes usePathname return e.g.
+  // "/assignments/", so strip the trailing slash before comparing to hrefs.
+  const pathname =
+    rawPathname !== "/" ? rawPathname.replace(/\/$/, "") : rawPathname;
 
   return (
     <Sidebar collapsible="icon">
