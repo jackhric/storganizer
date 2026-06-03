@@ -43,8 +43,8 @@ derive-cells — now run as explicit steps in `devices.service.create`.
 
 ```bash
 cd apps/server
-uv venv .venv && source .venv/bin/activate
-uv pip install -e '.[dev]'
+python -m venv .venv && source .venv/bin/activate
+pip install -e '.[dev]'
 
 uvicorn src.main:app --reload --port 8090
 ```

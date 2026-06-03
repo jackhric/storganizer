@@ -49,7 +49,9 @@ export function ItemPicker({ items, value, onChange }: Props) {
         ) : (
           filtered.map((item) => {
             const isSelected = selected.has(item.id);
-            const url = item.image ? itemImageUrl(item.id, "80x80") : null;
+            const url = item.image
+              ? itemImageUrl(item.id, "80x80", item.updated_at)
+              : null;
             return (
               <button
                 key={item.id}

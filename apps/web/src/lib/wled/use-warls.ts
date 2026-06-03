@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Rgb } from "@/lib/color/oklch";
+import type { Rgb } from "@/lib/color/hsl";
 
 // Resolve once per call: empty BACKEND_URL means "same origin", so we anchor
 // to window.location at connect time. SSR-safe guard returns "" up front.

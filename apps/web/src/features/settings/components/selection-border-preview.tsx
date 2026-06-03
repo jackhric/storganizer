@@ -20,7 +20,10 @@ export function SelectionBorderPreview() {
     if (pool.length > 0) setSeed(Math.floor(Math.random() * pool.length));
   }, [pool.length]);
 
-  const imageUrl = pick && pick.image ? itemImageUrl(pick.id, "400x400") : null;
+  const imageUrl =
+    pick && pick.image
+      ? itemImageUrl(pick.id, "400x400", pick.updated_at)
+      : null;
 
   return (
     <div className="flex items-center gap-4 rounded-lg border border-border bg-background p-4">

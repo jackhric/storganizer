@@ -169,6 +169,44 @@ export interface MoveRequest {
   to_cell_id: string;
 }
 
+export type SettingsReadHighlightEffect = typeof SettingsReadHighlightEffect[keyof typeof SettingsReadHighlightEffect];
+
+
+export const SettingsReadHighlightEffect = {
+  solid: 'solid',
+  blink: 'blink',
+  pulse: 'pulse',
+} as const;
+
+export interface SettingsRead {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  highlight_r: number;
+  highlight_g: number;
+  highlight_b: number;
+  highlight_effect: SettingsReadHighlightEffect;
+}
+
+export type SettingsUpdateHighlightEffect = typeof SettingsUpdateHighlightEffect[keyof typeof SettingsUpdateHighlightEffect] | null;
+
+
+export const SettingsUpdateHighlightEffect = {
+  solid: 'solid',
+  blink: 'blink',
+  pulse: 'pulse',
+} as const;
+
+/**
+ * All fields optional — a PATCH may set any subset.
+ */
+export interface SettingsUpdate {
+  highlight_r?: number | null;
+  highlight_g?: number | null;
+  highlight_b?: number | null;
+  highlight_effect?: SettingsUpdateHighlightEffect;
+}
+
 export interface TagCreate {
   name: string;
   color?: string;
@@ -197,6 +235,14 @@ device_id: string;
 
 export type ListItemsParams = {
 q?: string | null;
+};
+
+export type RandomItemsParams = {
+/**
+ * @minimum 1
+ * @maximum 10
+ */
+limit?: number;
 };
 
 export type GetItemImageParams = {

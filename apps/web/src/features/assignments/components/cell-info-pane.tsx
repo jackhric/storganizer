@@ -109,7 +109,9 @@ function OccupiedDetails({
   onRemoveAssignment: (assignmentId: string) => void;
 }) {
   const item = assignment.item;
-  const imageUrl = item?.image ? itemImageUrl(item.id, "200x200") : null;
+  const imageUrl = item?.image
+    ? itemImageUrl(item.id, "200x200", item.updated_at)
+    : null;
 
   // Local draft so the user can type freely; commit on blur or Enter.
   const [draft, setDraft] = useState(String(assignment.quantity));

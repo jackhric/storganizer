@@ -30,7 +30,8 @@ import type {
   HTTPValidationError,
   ItemRead,
   ItemTagsUpdate,
-  ListItemsParams
+  ListItemsParams,
+  RandomItemsParams
 } from './storganizerAPI.schemas';
 
 import { customFetch } from '../mutator';
@@ -234,7 +235,114 @@ export const useCreateItem = <TError = HTTPValidationError,
       > => {
       return useMutation(getCreateItemMutationOptions(options), queryClient);
     }
-    export const getGetItemUrl = (itemId: string,) => {
+    export const getRandomItemsUrl = (params?: RandomItemsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/items/random?${stringifiedParams}` : `/api/items/random`
+}
+
+/**
+ * @summary Random Items
+ */
+export const randomItems = async (params?: RandomItemsParams, options?: RequestInit): Promise<ItemRead[]> => {
+
+  return customFetch<ItemRead[]>(getRandomItemsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getRandomItemsQueryKey = (params?: RandomItemsParams,) => {
+    return [
+    `/api/items/random`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getRandomItemsQueryOptions = <TData = Awaited<ReturnType<typeof randomItems>>, TError = HTTPValidationError>(params?: RandomItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof randomItems>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRandomItemsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof randomItems>>> = () => randomItems(params, requestOptions);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof randomItems>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type RandomItemsQueryResult = NonNullable<Awaited<ReturnType<typeof randomItems>>>
+export type RandomItemsQueryError = HTTPValidationError
+
+
+export function useRandomItems<TData = Awaited<ReturnType<typeof randomItems>>, TError = HTTPValidationError>(
+ params: undefined |  RandomItemsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof randomItems>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof randomItems>>,
+          TError,
+          Awaited<ReturnType<typeof randomItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRandomItems<TData = Awaited<ReturnType<typeof randomItems>>, TError = HTTPValidationError>(
+ params?: RandomItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof randomItems>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof randomItems>>,
+          TError,
+          Awaited<ReturnType<typeof randomItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRandomItems<TData = Awaited<ReturnType<typeof randomItems>>, TError = HTTPValidationError>(
+ params?: RandomItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof randomItems>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Random Items
+ */
+
+export function useRandomItems<TData = Awaited<ReturnType<typeof randomItems>>, TError = HTTPValidationError>(
+ params?: RandomItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof randomItems>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getRandomItemsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getGetItemUrl = (itemId: string,) => {
 
 
 

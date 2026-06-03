@@ -15,7 +15,9 @@ type Props = {
 const MAX_THUMBS = 5;
 
 function Thumb({ item, size = "md" }: { item: ItemRead; size?: "sm" | "md" }) {
-  const url = item.image ? itemImageUrl(item.id, "80x80") : null;
+  const url = item.image
+    ? itemImageUrl(item.id, "80x80", item.updated_at)
+    : null;
   const dim = size === "sm" ? "h-7 w-7" : "h-8 w-8";
 
   return (

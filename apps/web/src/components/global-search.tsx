@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +11,35 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { RandomItemCarousel } from "@/features/items/components/random-item-carousel";
+import { SelectionOutline } from "@/features/items/components/selection-outline";
+import { useFindSelection } from "@/features/items/hooks/use-find-selection";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useIsMac } from "@/hooks/use-is-mac";
+import { useListItems } from "@/lib/api/generated/items";
+import { itemImageUrl } from "@/lib/api/urls";
+import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
 
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 250);
+  const trimmedQuery = debouncedQuery.trim();
+  const isMac = useIsMac();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // While the dialog is open, the search input must never lose focus, so the
+  // user can keep typing after clicking a result (or anywhere else) without
+  // having to click back into the field. On blur, focus has already begun
+  // moving away, so we pull it back on the next tick.
+  function handleInputBlur() {
+    if (!open) return;
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
         e.preventDefault();
         setOpen((v) => !v);
       }
@@ -25,6 +47,27 @@ export function GlobalSearch() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+
+  // Reset the query on close so the dialog opens fresh next time.
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setQuery("");
+  }
+
+  const { data: items = [] } = useListItems(
+    { q: trimmedQuery },
+    { query: { enabled: open && trimmedQuery.length > 0 } },
+  );
+
+  // Selection is backed by the global find store, so toggling here mirrors the
+  // Items page exactly — and items already selected elsewhere show as selected.
+  const { isSelected, toggle } = useFindSelection();
+
+  function handleSelect(item: ItemRead) {
+    // "Find" the item (light its cells + mark it selected). The dialog stays
+    // open so multiple items can be selected in one session.
+    toggle(item);
+  }
 
   return (
     <>
@@ -39,17 +82,72 @@ export function GlobalSearch() {
           Search…
         </span>
         <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] sm:flex">
-          ⌘K
+          {isMac ? "⌘F" : "Ctrl+F"}
         </kbd>
       </Button>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search items, devices…" />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Items">
-            {/* TODO: wire up real results */}
-          </CommandGroup>
+      {/* Sizing overrides live here (not in the vendored ui/ files): widen the
+          dialog and scale up input, list, rows, and text by ~25%. */}
+      <CommandDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        className="sm:max-w-xl"
+      >
+        <CommandInput
+          ref={inputRef}
+          placeholder="Search items, devices…"
+          value={query}
+          onValueChange={setQuery}
+          onBlur={handleInputBlur}
+          className="h-10! text-base"
+        />
+        <CommandList className="max-h-96">
+          {trimmedQuery.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 px-1 pt-8 pb-2 text-center text-base text-muted-foreground">
+              <span className="flex flex-col items-center gap-2">
+                <SearchIcon className="h-6 w-6 opacity-50" />
+                <span className="accent-shimmer font-medium">
+                  Type to search…
+                </span>
+              </span>
+              <RandomItemCarousel active={open && trimmedQuery.length === 0} />
+            </div>
+          ) : (
+            <CommandEmpty className="py-8 text-base">
+              No results found.
+            </CommandEmpty>
+          )}
+          {items.length > 0 && (
+            <CommandGroup heading="Items">
+              {items.map((item) => (
+                <CommandItem
+                  key={item.id}
+                  // cmdk filters items by `value` against the typed text. The
+                  // backend already matched on name, so using the name keeps
+                  // every server result visible. (Suffix the id to keep values
+                  // unique when two items share a name.)
+                  value={`${item.name} ${item.id}`}
+                  onSelect={() => handleSelect(item)}
+                  className="relative gap-3 py-2.5 text-base"
+                >
+                  {isSelected(item.id) && <SelectionOutline rounded={8} />}
+                  {item.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={itemImageUrl(item.id, "64x64", item.updated_at)}
+                      alt=""
+                      className="h-8 w-8 shrink-0 rounded object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-muted text-xs font-medium">
+                      {item.name.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="truncate">{item.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
     </>
