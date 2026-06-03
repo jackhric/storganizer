@@ -17,11 +17,8 @@ import { useListDevices } from "@/lib/api/generated/devices";
 import { useListItems } from "@/lib/api/generated/items";
 import { useListTags } from "@/lib/api/generated/tags";
 import { useFindStore } from "@/lib/stores/find";
-import type { WarlsFrame } from "@/lib/wled/use-warls";
-import type { Rgb } from "@/lib/color/oklch";
+import { useFindSelection } from "@/features/items/hooks/use-find-selection";
 import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
-
-const HIGHLIGHT_COLOR: Rgb = { r: 255, g: 140, b: 0 };
 
 export default function HomePage() {
   const [activeTags, setActiveTags] = useState<string[]>([]);
@@ -51,9 +48,7 @@ export default function HomePage() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [itemsLoading]);
-  const selections = useFindStore((s) => s.selections);
-  const toggleSelection = useFindStore((s) => s.toggle);
-  const removeSelection = useFindStore((s) => s.remove);
+  const { selections, toggle: handleFind } = useFindSelection();
   const clearSelections = useFindStore((s) => s.clear);
 
   const filtered = useMemo(() => {
@@ -74,26 +69,6 @@ export default function HomePage() {
       return true;
     });
   }, [items, activeTags, activeDevices]);
-
-  function handleFind(item: ItemRead) {
-    if (selections.has(item.id)) {
-      removeSelection(item.id);
-      return;
-    }
-    const frame: WarlsFrame = new Map();
-    for (const a of item.assignments ?? []) {
-      const cell = a.cell;
-      if (!cell) continue;
-      let perDevice = frame.get(cell.device_id);
-      if (!perDevice) {
-        perDevice = new Map();
-        frame.set(cell.device_id, perDevice);
-      }
-      perDevice.set(cell.led_index, HIGHLIGHT_COLOR);
-    }
-    if (frame.size === 0) return;
-    toggleSelection(item.id, frame);
-  }
 
   const selectedItems = useMemo(() => {
     if (!items || selections.size === 0) return [];
