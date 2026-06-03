@@ -2,29 +2,23 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragOverEvent, type DragStartEvent, type Modifier } from "@dnd-kit/core";
-import { useQueryClient } from "@tanstack/react-query";
 import { useWarls, type WarlsFrame } from "@/lib/wled/use-warls";
 import { itemImageUrl } from "@/lib/api/urls";
-import {
-  useAssignmentsByDevice,
-  useCreateAssignment,
-  useDeleteAssignment,
-  useMoveAssignment,
-  useUpdateAssignment,
-} from "@/lib/api/generated/assignments";
+import { useAssignmentsByDevice } from "@/lib/api/generated/assignments";
 import { useListCells } from "@/lib/api/generated/cells";
 import { useListDevices } from "@/lib/api/generated/devices";
-import { getListItemsQueryKey, useListItems } from "@/lib/api/generated/items";
+import { useListItems } from "@/lib/api/generated/items";
+import { useAssignments } from "@/features/assignments/hooks/use-assignments";
 import { AssignmentItemList } from "@/features/assignments/components/assignment-item-list";
 import { CellInfoPane } from "@/features/assignments/components/cell-info-pane";
-import { DeviceSelector } from "@/features/assignments/components/device-selector";
+import { DeviceSelect } from "@/features/assignments/components/device-select";
 import { GridPreview } from "@/features/assignments/components/grid-preview";
-import type { Rgb } from "@/lib/color/oklch";
-import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
-
-// Invalidating the parameterized by-device query key matches every variant
-// (orval emits ["/api/assignments/by-device/{device_id}", deviceId] under the hood).
-const ASSIGNMENTS_BY_DEVICE_KEY = ["/api/assignments/by-device"] as const;
+import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
+import type { Rgb } from "@/lib/color/hsl";
+import type {
+  ItemRead,
+  ItemWithTags,
+} from "@/lib/api/generated/storganizerAPI.schemas";
 
 const COLOR_WHITE: Rgb = { r: 255, g: 255, b: 255 };
 const COLOR_ORANGE: Rgb = { r: 255, g: 140, b: 0 };
@@ -60,12 +54,7 @@ export default function AssignmentsPage() {
   const [dragOverCellId, setDragOverCellId] = useState<string | null>(null);
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [breathPhase, setBreathPhase] = useState(0);
-
-  const qc = useQueryClient();
-  const invalidateAssignmentsAndItems = () => {
-    qc.invalidateQueries({ queryKey: ASSIGNMENTS_BY_DEVICE_KEY });
-    qc.invalidateQueries({ queryKey: getListItemsQueryKey() });
-  };
+  const [editingItem, setEditingItem] = useState<ItemRead | null>(null);
 
   const { data: items, isLoading: itemsLoading } = useListItems();
   const { data: devices } = useListDevices();
@@ -77,18 +66,8 @@ export default function AssignmentsPage() {
     query: { enabled: !!selectedDeviceId },
   });
 
-  const createAssignment = useCreateAssignment({
-    mutation: { onSuccess: invalidateAssignmentsAndItems },
-  });
-  const updateAssignment = useUpdateAssignment({
-    mutation: { onSuccess: invalidateAssignmentsAndItems },
-  });
-  const deleteAssignment = useDeleteAssignment({
-    mutation: { onSuccess: invalidateAssignmentsAndItems },
-  });
-  const moveAssignmentMutation = useMoveAssignment({
-    mutation: { onSuccess: invalidateAssignmentsAndItems },
-  });
+  const { occupyCell, moveOrSwap, setQuantity, removeAssignment } =
+    useAssignments(selectedDeviceId, items);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
@@ -237,25 +216,34 @@ export default function AssignmentsPage() {
     if (!over) return;
     const itemId = active.data.current?.itemId as string | undefined;
     const fromCellId = active.data.current?.fromCellId as string | undefined;
+    const isTrashZone = over.data.current?.trashZone === true;
     const cellId = over.data.current?.cellId as string | undefined;
-    if (!cellId) return;
 
-    if (fromCellId) {
-      if (fromCellId === cellId) return;
-      await moveAssignmentMutation.mutateAsync({
-        data: { from_cell_id: fromCellId, to_cell_id: cellId },
-      });
+    // Dragging an assigned item back onto the items list removes its
+    // assignment. Only assigned items (those with a fromCellId) can be deleted
+    // this way — dropping an unassigned item here is a no-op.
+    if (isTrashZone) {
+      if (!fromCellId) return;
+      const assignment = assignmentsByCellId.get(fromCellId);
+      if (assignment) removeAssignment(assignment.id);
       return;
     }
 
-    if (!itemId) return;
-    const existing = assignmentsByCellId.get(cellId);
-    if (existing) {
-      await deleteAssignment.mutateAsync({ assignmentId: existing.id });
+    if (!cellId) return;
+
+    try {
+      if (fromCellId) {
+        await moveOrSwap(fromCellId, cellId);
+        return;
+      }
+      if (!itemId) return;
+      await occupyCell(cellId, itemId);
+    } catch (error) {
+      // occupyCell already self-heals a stale-cache 409 (refetch + retry);
+      // anything that still throws is a genuine failure. Log rather than let
+      // it surface as an unhandled promise rejection.
+      console.error("assignment drop failed", error);
     }
-    await createAssignment.mutateAsync({
-      data: { cell_id: cellId, item_id: itemId, quantity: 1 },
-    });
   }
 
   function handleDragCancel() {
@@ -267,6 +255,14 @@ export default function AssignmentsPage() {
 
   function toggleCellSelection(cellId: string) {
     setSelectedCellId((current) => (current === cellId ? null : cellId));
+  }
+
+  // The grid hands back the assignment's embedded ItemWithTags; resolve it to
+  // the full ItemRead the form dialog expects (falling back to the embedded
+  // shape, which is a structural subset).
+  function handleEditItem(item: ItemWithTags) {
+    const full = items?.find((i) => i.id === item.id);
+    setEditingItem(full ?? (item as ItemRead));
   }
 
   return (
@@ -281,11 +277,12 @@ export default function AssignmentsPage() {
         <AssignmentItemList
           items={items}
           isLoading={itemsLoading}
+          isAssignedDragActive={isDragging && dragFromCellId !== null}
         />
 
         <div className="flex flex-1 flex-col min-h-0 border-y border-border lg:border-y-0">
           <div className="px-6 py-5 border-b border-border">
-            <DeviceSelector
+            <DeviceSelect
               devices={devices}
               selectedId={selectedDeviceId}
               onSelect={setSelectedDeviceId}
@@ -303,6 +300,8 @@ export default function AssignmentsPage() {
                 onCellHoverChange={setHoveredLed}
                 selectedCellId={selectedCellId}
                 onCellSelect={toggleCellSelection}
+                onEditItem={handleEditItem}
+                onDeleteAssignment={removeAssignment}
               />
             ) : (
               <div className="flex flex-1 items-center justify-center">
@@ -318,18 +317,21 @@ export default function AssignmentsPage() {
           device={selectedDevice}
           selectedCell={selectedCell}
           assignment={selectedAssignment}
-          onUpdateQuantity={(id, quantity) =>
-            updateAssignment.mutate({
-              assignmentId: id,
-              data: { quantity },
-            })
-          }
+          onUpdateQuantity={(id, quantity) => setQuantity(id, quantity)}
           onRemoveAssignment={(id) => {
-            deleteAssignment.mutate({ assignmentId: id });
+            removeAssignment(id);
             setSelectedCellId(null);
           }}
         />
       </div>
+
+      <ItemFormDialog
+        open={editingItem !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingItem(null);
+        }}
+        item={editingItem ?? undefined}
+      />
 
       <DragOverlay dropAnimation={null} modifiers={[snapCenterToCursor]}>
         {activeItem ? <ItemDragGhost item={activeItem} /> : null}
@@ -339,7 +341,9 @@ export default function AssignmentsPage() {
 }
 
 function ItemDragGhost({ item }: { item: ItemRead }) {
-  const imageUrl = item.image ? itemImageUrl(item.id, "100x100") : null;
+  const imageUrl = item.image
+    ? itemImageUrl(item.id, "100x100", item.updated_at)
+    : null;
   return (
     <div className="h-[100px] w-[100px] overflow-hidden rounded-md border border-border bg-muted shadow-lg cursor-grabbing opacity-70">
       {imageUrl ? (

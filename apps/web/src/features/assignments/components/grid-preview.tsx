@@ -2,10 +2,18 @@
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { motion } from "motion/react";
+import { PencilIcon, Trash2Icon } from "lucide-react";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
-import type { Rgb } from "@/lib/color/oklch";
+import type { Rgb } from "@/lib/color/hsl";
 import type {
   AssignmentByDevice,
   CellRead as Cell,
@@ -22,6 +30,8 @@ type Props = {
   onCellHoverChange: (ledIndex: number | null) => void;
   selectedCellId: string | null;
   onCellSelect: (cellId: string) => void;
+  onEditItem: (item: ItemWithTags) => void;
+  onDeleteAssignment: (assignmentId: string) => void;
 };
 
 export function GridPreview({
@@ -33,6 +43,8 @@ export function GridPreview({
   onCellHoverChange,
   selectedCellId,
   onCellSelect,
+  onEditItem,
+  onDeleteAssignment,
 }: Props) {
   const hasGrid = device.grid_width > 0 && device.grid_height > 0;
 
@@ -71,6 +83,8 @@ export function GridPreview({
           color={cellColors.get(cell.led_index) ?? null}
           isSelected={selectedCellId === cell.id}
           onSelect={onCellSelect}
+          onEditItem={onEditItem}
+          onDeleteAssignment={onDeleteAssignment}
         />
       ))}
     </div>
@@ -84,6 +98,8 @@ function DroppableCell({
   color,
   isSelected,
   onSelect,
+  onEditItem,
+  onDeleteAssignment,
 }: {
   cell: Cell;
   assignment: AssignmentByDevice | undefined;
@@ -91,6 +107,8 @@ function DroppableCell({
   color: Rgb | null;
   isSelected: boolean;
   onSelect: (cellId: string) => void;
+  onEditItem: (item: ItemWithTags) => void;
+  onDeleteAssignment: (assignmentId: string) => void;
 }) {
   const item = assignment?.item;
 
@@ -117,7 +135,7 @@ function DroppableCell({
 
   const rgb = color ? `rgb(${color.r}, ${color.g}, ${color.b})` : null;
 
-  return (
+  const cellNode = (
     <motion.div
       ref={setNodeRef}
       {...(item ? listeners : {})}
@@ -157,10 +175,48 @@ function DroppableCell({
       )}
     </motion.div>
   );
+
+  // Only occupied cells get a right-click menu — there's nothing to act on in
+  // an empty cell. The trigger renders the cell itself so no extra layout
+  // wrapper disturbs the grid.
+  if (!item) return cellNode;
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger render={cellNode} />
+      <ContextMenuContent>
+        {/* Read-only header: which cell was clicked and what's in it. */}
+        <div className="px-1.5 py-1 select-none">
+          <p className="truncate text-sm font-medium">{item.name}</p>
+          <p className="text-xs text-muted-foreground">LED {cell.led_index}</p>
+        </div>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          className="cursor-pointer"
+          onClick={() => onEditItem(item)}
+        >
+          <PencilIcon />
+          Edit Item
+        </ContextMenuItem>
+        {assignment && (
+          <ContextMenuItem
+            className="cursor-pointer"
+            variant="destructive"
+            onClick={() => onDeleteAssignment(assignment.id)}
+          >
+            <Trash2Icon />
+            Delete Assignment
+          </ContextMenuItem>
+        )}
+      </ContextMenuContent>
+    </ContextMenu>
+  );
 }
 
 function CellContent({ item }: { item: ItemWithTags }) {
-  const imageUrl = item.image ? itemImageUrl(item.id, "400x400") : null;
+  const imageUrl = item.image
+    ? itemImageUrl(item.id, "400x400", item.updated_at)
+    : null;
 
   return (
     <>

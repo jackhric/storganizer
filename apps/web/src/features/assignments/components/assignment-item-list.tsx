@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useDraggable } from "@dnd-kit/core";
-import { GripVerticalIcon, PackageOpenIcon, PlusIcon } from "lucide-react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { GripVerticalIcon, PackageOpenIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,20 +15,69 @@ import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
 type Props = {
   items: ItemRead[] | undefined;
   isLoading?: boolean;
+  /**
+   * True while an already-assigned item is being dragged. The list doubles as a
+   * "remove assignment" drop target only in this case — dragging an unassigned
+   * item here is a no-op.
+   */
+  isAssignedDragActive?: boolean;
 };
 
-export function AssignmentItemList({ items, isLoading }: Props) {
+export function AssignmentItemList({
+  items,
+  isLoading,
+  isAssignedDragActive,
+}: Props) {
   const [formOpen, setFormOpen] = useState(false);
 
+  // The whole list is a drop target. Page-level handleDragEnd reads
+  // data.current.trashZone to know a drop landed here.
+  const { isOver, setNodeRef } = useDroppable({
+    id: "trash-zone",
+    data: { trashZone: true },
+  });
+
+  const showTrashOverlay = !!isAssignedDragActive;
+
   return (
-    <div className="flex flex-col lg:w-[340px] shrink-0">
+    <div ref={setNodeRef} className="relative flex flex-col lg:w-[340px] shrink-0">
+      {showTrashOverlay && (
+        <div
+          className={cn(
+            "absolute inset-0 z-20 flex flex-col items-center justify-center gap-3",
+            "backdrop-blur-sm transition-colors pointer-events-none",
+            isOver
+              ? "bg-destructive/25 ring-2 ring-inset ring-destructive"
+              : "bg-background/60",
+          )}
+        >
+          <div
+            className={cn(
+              "rounded-full p-5 transition-colors",
+              isOver
+                ? "bg-destructive text-destructive-foreground"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
+            <Trash2Icon className="h-10 w-10" />
+          </div>
+          <p
+            className={cn(
+              "text-sm font-medium transition-colors",
+              isOver ? "text-destructive" : "text-muted-foreground",
+            )}
+          >
+            Drop here to remove assignment
+          </p>
+        </div>
+      )}
       <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
         <h2 className="font-semibold text-base">Items</h2>
         <Badge variant="secondary" className="tabular-nums">
           {items?.length ?? 0}
         </Badge>
         <Button
-          size="sm"
+          size="lg"
           variant="ghost"
           className="ml-auto gap-1.5"
           onClick={() => setFormOpen(true)}
@@ -84,7 +133,9 @@ function DraggableItemRow({ item }: { item: ItemRead }) {
     data: { itemId: item.id },
   });
 
-  const imageUrl = item.image ? itemImageUrl(item.id, "80x80") : null;
+  const imageUrl = item.image
+    ? itemImageUrl(item.id, "80x80", item.updated_at)
+    : null;
 
   return (
     <li
