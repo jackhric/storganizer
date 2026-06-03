@@ -71,7 +71,9 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
             ? (item.external_links as ExternalLink[])
             : [],
         );
-        setImagePreview(item.image ? itemImageUrl(item.id, "400x400") : null);
+        setImagePreview(
+          item.image ? itemImageUrl(item.id, "400x400", item.updated_at) : null,
+        );
       } else {
         reset({ name: "", store_url: "", notes: "" });
         setTags([]);
