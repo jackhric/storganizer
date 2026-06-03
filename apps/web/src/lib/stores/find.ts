@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { Rgb } from "@/lib/color/oklch";
+import type { Rgb } from "@/lib/color/hsl";
 import type { WarlsFrame, WarlsDeviceFrame } from "@/lib/wled/use-warls";
 
 type FindState = {
