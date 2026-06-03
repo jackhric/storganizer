@@ -23,6 +23,7 @@ from src.core.database import Base, SessionLocal, engine
 from src.devices import service as devices_service
 from src.devices.router import router as devices_router
 from src.items.router import router as items_router
+from src.settings.router import router as settings_router
 from src.tags.router import router as tags_router
 from src.warls.registry import Registry
 from src.warls.session import router as warls_router
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
         items_router,
         assignments_router,
         tags_router,
+        settings_router,
     )
     for router in api_routers:
         app.include_router(router, prefix="/api")

@@ -6,4 +6,5 @@ import src.assignments.models  # noqa: F401
 import src.cells.models  # noqa: F401
 import src.devices.models  # noqa: F401
 import src.items.models  # noqa: F401
+import src.settings.models  # noqa: F401
 import src.tags.models  # noqa: F401
