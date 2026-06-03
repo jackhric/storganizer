@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -37,6 +37,12 @@ async def list_items(db: AsyncSession, search: str | None = None) -> list[Item]:
     stmt = select(Item).options(*_EXPAND).order_by(Item.name)
     if search:
         stmt = stmt.where(Item.name.ilike(f"%{search}%"))
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def list_random(db: AsyncSession, limit: int = 10) -> list[Item]:
+    stmt = select(Item).options(*_EXPAND).order_by(func.random()).limit(limit)
     result = await db.execute(stmt)
     return list(result.scalars().all())
 

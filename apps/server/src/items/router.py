@@ -3,6 +3,7 @@ fields); list/get return the expanded shape; the image endpoint serves
 originals and on-demand thumbnails.
 
     GET    /items?q=                list (tags + assignments expanded)
+    GET    /items/random?limit=     up to `limit` (max 10) random items
     GET    /items/{id}              read
     POST   /items                   create (multipart)
     PATCH  /items/{id}              update (multipart, all fields optional)
@@ -14,7 +15,16 @@ originals and on-demand thumbnails.
 import json
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,6 +50,13 @@ def _parse_json_field(raw: str | None, default: Any) -> Any:
 @router.get("", response_model=list[ItemRead])
 async def list_items(q: str | None = None, db: AsyncSession = Depends(get_session)):
     return await service.list_items(db, search=q)
+
+
+@router.get("/random", response_model=list[ItemRead])
+async def random_items(
+    limit: int = Query(10, ge=1, le=10), db: AsyncSession = Depends(get_session)
+):
+    return await service.list_random(db, limit=limit)
 
 
 @router.get("/{item_id}", response_model=ItemRead)
