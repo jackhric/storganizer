@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
 import { deterministicColor } from "@/lib/tags";
-import { useSelectionBorderStore } from "@/lib/stores/selection-border";
+import { SelectionOutline } from "@/features/items/components/selection-outline";
 import { useUpdateItem } from "@/features/items/hooks/use-items";
 import { TagDot, TagOverflowDot } from "@/features/tags/components/tag-dot";
 import type { ItemRead } from "@/lib/api/generated/storganizerAPI.schemas";
@@ -33,11 +33,12 @@ type Props = {
 };
 
 export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }: Props) {
-  const imageUrl = item.image ? itemImageUrl(item.id, "400x400") : null;
+  const imageUrl = item.image
+    ? itemImageUrl(item.id, "400x400", item.updated_at)
+    : null;
 
   const tags = item.tags ?? [];
   const hasAssignment = (item.assignments ?? []).length > 0;
-  const selectionBorder = useSelectionBorderStore((s) => s.style);
 
   const updateItem = useUpdateItem();
   const [fileDragOver, setFileDragOver] = useState(false);
@@ -105,29 +106,7 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
       onDrop={onDrop}
     >
       {/* Marching-ants outline (while finding) — sits outside the card */}
-      {isHighlighting && (
-        <svg
-          className="pointer-events-none absolute -inset-0.5 z-30 h-[calc(100%+0.25rem)] w-[calc(100%+0.25rem)]"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-        >
-          <rect
-            x="2"
-            y="2"
-            width="calc(100% - 4px)"
-            height="calc(100% - 4px)"
-            rx="10"
-            ry="10"
-            fill="none"
-            stroke="var(--primary)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            {...(selectionBorder === "marching-ants"
-              ? { strokeDasharray: "8 6", className: "marching-ants" }
-              : {})}
-          />
-        </svg>
-      )}
+      {isHighlighting && <SelectionOutline overhang />}
     <Card
       onClick={() => onHighlight?.(item)}
       className={cn(
