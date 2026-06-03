@@ -4,8 +4,10 @@ import { useState } from "react";
 import { SlidersHorizontalIcon } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useAccentStore, ACCENT_PRESETS } from "@/lib/stores/accent";
+import { hslCss } from "@/lib/color/hsl";
 import {
   useSelectionBorderStore,
   type SelectionBorderStyle,
@@ -13,19 +15,16 @@ import {
 import { SettingsGroup } from "@/features/settings/components/settings-group";
 import { SettingsRow } from "@/features/settings/components/settings-row";
 import { SelectionBorderPreview } from "@/features/settings/components/selection-border-preview";
-
-function accentColor(hue: number, chroma: number) {
-  return `oklch(0.65 ${chroma} ${hue})`;
-}
+import { LightingSettings } from "@/features/settings/components/lighting-settings";
 
 export default function GeneralSettingsPage() {
-  const { hue, chroma, setAccent } = useAccentStore();
+  const { h, s, l, autoAdjust, setAccent, setAutoAdjust } = useAccentStore();
   const { style: selectionStyle, setStyle: setSelectionStyle } =
     useSelectionBorderStore();
   const [customOpen, setCustomOpen] = useState(false);
 
   const isPreset = ACCENT_PRESETS.some(
-    (p) => p.hue === hue && p.chroma === chroma,
+    (p) => p.h === h && p.s === s && p.l === l,
   );
 
   return (
@@ -34,17 +33,17 @@ export default function GeneralSettingsPage() {
 
       <SettingsGroup label="Appearance">
         <SettingsRow
-          label="Accent colour"
+          label="Accent color"
           description="Used for active states, buttons, and highlights."
         >
           <div className="flex flex-wrap gap-2">
             {ACCENT_PRESETS.map((preset) => {
-              const active = hue === preset.hue && chroma === preset.chroma;
+              const active = h === preset.h && s === preset.s && l === preset.l;
               return (
                 <button
                   key={preset.name}
                   onClick={() => {
-                    setAccent(preset.hue, preset.chroma);
+                    setAccent(preset.h, preset.s, preset.l);
                     setCustomOpen(false);
                   }}
                   title={preset.name}
@@ -54,9 +53,7 @@ export default function GeneralSettingsPage() {
                       ? "ring-foreground scale-110"
                       : "ring-transparent hover:scale-105",
                   )}
-                  style={{
-                    backgroundColor: accentColor(preset.hue, preset.chroma),
-                  }}
+                  style={{ backgroundColor: hslCss(preset.h, preset.s, preset.l) }}
                 >
                   <span className="sr-only">{preset.name}</span>
                 </button>
@@ -72,11 +69,7 @@ export default function GeneralSettingsPage() {
                   ? "ring-foreground scale-110"
                   : "ring-transparent hover:scale-105",
               )}
-              style={
-                !isPreset
-                  ? { backgroundColor: accentColor(hue, chroma) }
-                  : undefined
-              }
+              style={!isPreset ? { backgroundColor: hslCss(h, s, l) } : undefined}
             >
               <SlidersHorizontalIcon className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="sr-only">Custom</span>
@@ -85,69 +78,69 @@ export default function GeneralSettingsPage() {
 
           {customOpen && (
             <div className="space-y-5 rounded-lg border border-border bg-background p-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium">Hue</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {Math.round(hue)}°
-                  </span>
-                </div>
-                <div className="relative">
-                  <div
-                    className="pointer-events-none absolute inset-0 top-1/2 h-2 -translate-y-1/2 rounded-full"
-                    style={{
-                      background:
-                        "linear-gradient(to right, oklch(0.65 0.18 0), oklch(0.65 0.18 30), oklch(0.65 0.18 60), oklch(0.65 0.18 90), oklch(0.65 0.18 120), oklch(0.65 0.18 150), oklch(0.65 0.18 180), oklch(0.65 0.18 210), oklch(0.65 0.18 240), oklch(0.65 0.18 270), oklch(0.65 0.18 300), oklch(0.65 0.18 330), oklch(0.65 0.18 360))",
-                    }}
-                  />
-                  <Slider
-                    min={0}
-                    max={360}
-                    step={1}
-                    value={[hue]}
-                    onValueChange={(h) => setAccent(h as number, chroma)}
-                    className="**:data-[slot=slider-track]:bg-transparent **:data-[slot=slider-range]:bg-transparent"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium">Chroma</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {chroma.toFixed(2)}
-                  </span>
-                </div>
-                <Slider
-                  min={0.05}
-                  max={0.3}
-                  step={0.01}
-                  value={[chroma]}
-                  onValueChange={(c) => setAccent(hue, c as number)}
-                />
-              </div>
+              <AccentSlider
+                label="Hue"
+                value={h}
+                min={0}
+                max={360}
+                display={`${Math.round(h)}°`}
+                onChange={(next) => setAccent(next, s, l)}
+                trackGradient="linear-gradient(to right, hsl(0 90% 55%), hsl(60 90% 55%), hsl(120 90% 55%), hsl(180 90% 55%), hsl(240 90% 55%), hsl(300 90% 55%), hsl(360 90% 55%))"
+              />
+              <AccentSlider
+                label="Saturation"
+                value={s}
+                min={0}
+                max={100}
+                display={`${Math.round(s)}%`}
+                onChange={(next) => setAccent(h, next, l)}
+                trackGradient={`linear-gradient(to right, ${hslCss(h, 0, l)}, ${hslCss(h, 100, l)})`}
+              />
+              <AccentSlider
+                label="Lightness"
+                value={l}
+                min={0}
+                max={100}
+                display={`${Math.round(l)}%`}
+                onChange={(next) => setAccent(h, s, next)}
+                trackGradient={`linear-gradient(to right, ${hslCss(h, s, 0)}, ${hslCss(h, s, 50)}, ${hslCss(h, s, 100)})`}
+              />
 
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2">
                   <div
                     className="h-6 w-6 rounded-full"
-                    style={{ backgroundColor: accentColor(hue, chroma) }}
+                    style={{ backgroundColor: hslCss(h, s, l) }}
                   />
-                  <span className="text-xs text-muted-foreground">
-                    oklch(0.65 {chroma.toFixed(2)} {Math.round(hue)})
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    hsl({Math.round(h)} {Math.round(s)}% {Math.round(l)}%)
                   </span>
                 </div>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-7 text-xs"
-                  onClick={() => setAccent(54, 0.18)}
+                  onClick={() =>
+                    setAccent(
+                      ACCENT_PRESETS[0].h,
+                      ACCENT_PRESETS[0].s,
+                      ACCENT_PRESETS[0].l,
+                    )
+                  }
                 >
                   Reset
                 </Button>
               </div>
             </div>
           )}
+
+          <label className="mt-1 flex items-center gap-2.5 text-xs text-muted-foreground">
+            <Checkbox
+              checked={autoAdjust}
+              onCheckedChange={(checked) => setAutoAdjust(checked === true)}
+            />
+            <span>Auto-adjust brightness for dark mode</span>
+          </label>
         </SettingsRow>
 
         <SettingsRow
@@ -163,6 +156,51 @@ export default function GeneralSettingsPage() {
           <SelectionBorderPreview />
         </SettingsRow>
       </SettingsGroup>
+
+      <LightingSettings />
+    </div>
+  );
+}
+
+function AccentSlider({
+  label,
+  value,
+  min,
+  max,
+  display,
+  onChange,
+  trackGradient,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  display: string;
+  onChange: (next: number) => void;
+  trackGradient: string;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium">{label}</span>
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {display}
+        </span>
+      </div>
+      <div className="relative">
+        <div
+          className="pointer-events-none absolute inset-0 top-1/2 h-2 -translate-y-1/2 rounded-full"
+          style={{ background: trackGradient }}
+        />
+        <Slider
+          min={min}
+          max={max}
+          step={1}
+          value={[value]}
+          onValueChange={(v) => onChange(v as number)}
+          className="**:data-[slot=slider-track]:bg-transparent **:data-[slot=slider-range]:bg-transparent"
+        />
+      </div>
     </div>
   );
 }

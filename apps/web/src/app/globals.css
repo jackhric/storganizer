@@ -56,8 +56,9 @@
   --card-foreground: oklch(0.12 0.003 247);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.12 0.003 247);
-  /* Orange/amber primary */
-  --primary: oklch(0.65 0.18 54);
+  /* Orange/amber primary — kept in sync with the Amber accent preset (HSL).
+     Overridden at runtime by AccentProvider. */
+  --primary: hsl(35 95% 55%);
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.93 0.003 247);
   --secondary-foreground: oklch(0.12 0.003 247);
@@ -68,8 +69,8 @@
   --destructive: oklch(0.58 0.22 25);
   --border: oklch(0 0 0 / 10%);
   --input: oklch(0 0 0 / 8%);
-  --ring: oklch(0.65 0.18 54 / 60%);
-  --chart-1: oklch(0.65 0.18 54);
+  --ring: hsl(35 95% 55% / 60%);
+  --chart-1: hsl(35 95% 55%);
   --chart-2: oklch(0.55 0.15 200);
   --chart-3: oklch(0.55 0.15 280);
   --chart-4: oklch(0.55 0.15 140);
@@ -77,13 +78,16 @@
   --radius: 0.5rem;
   --sidebar: oklch(0.95 0.003 247);
   --sidebar-foreground: oklch(0.12 0.003 247);
-  --sidebar-primary: oklch(0.65 0.18 54);
+  --sidebar-primary: hsl(35 95% 55%);
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.9 0.003 247);
   --sidebar-accent-foreground: oklch(0.12 0.003 247);
   --sidebar-border: oklch(0 0 0 / 8%);
-  --sidebar-ring: oklch(0.65 0.18 54 / 60%);
+  --sidebar-ring: hsl(35 95% 55% / 60%);
   --cell-gradient: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02));
+  /* Bright core of the shimmer sweep: a soft dark grey on light backgrounds —
+     pulled off pure black so the glint is subtle, not a hard pop. */
+  --shimmer-core: oklch(0.42 0.003 247);
 }
 
 /* Dark zinc theme */
@@ -94,7 +98,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.13 0.002 247);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.75 0.18 54);
+  --primary: hsl(35 95% 67%);
   --primary-foreground: oklch(0.09 0 0);
   --secondary: oklch(0.19 0.003 247);
   --secondary-foreground: oklch(0.985 0 0);
@@ -105,21 +109,24 @@
   --destructive: oklch(0.65 0.22 25);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.75 0.18 54 / 60%);
-  --chart-1: oklch(0.75 0.18 54);
+  --ring: hsl(35 95% 67% / 60%);
+  --chart-1: hsl(35 95% 67%);
   --chart-2: oklch(0.65 0.15 200);
   --chart-3: oklch(0.65 0.15 280);
   --chart-4: oklch(0.65 0.15 140);
   --chart-5: oklch(0.65 0.15 320);
   --sidebar: oklch(0.11 0.002 247);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.75 0.18 54);
+  --sidebar-primary: hsl(35 95% 67%);
   --sidebar-primary-foreground: oklch(0.09 0 0);
   --sidebar-accent: oklch(0.19 0.003 247);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 6%);
-  --sidebar-ring: oklch(0.75 0.18 54 / 60%);
+  --sidebar-ring: hsl(35 95% 67% / 60%);
   --cell-gradient: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02));
+  /* Bright core of the shimmer sweep: a soft off-white on dark backgrounds —
+     pulled off pure white so the glint is subtle, not a hard pop. */
+  --shimmer-core: oklch(0.82 0 0);
 }
 
 @keyframes marching-ants {
@@ -130,6 +137,45 @@
 
 .marching-ants {
   animation: marching-ants 0.6s linear infinite;
+}
+
+@keyframes accent-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* A muted label with a band of the live accent color sweeping through the
+   glyphs. The gradient is clipped to the text; the accent stop references
+   --primary, so it tracks the selected accent + theme adjustments live. */
+.accent-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    var(--muted-foreground) 0%,
+    var(--muted-foreground) 30%,
+    var(--primary) 42%,
+    var(--shimmer-core) 50%,
+    var(--primary) 58%,
+    var(--muted-foreground) 70%,
+    var(--muted-foreground) 100%
+  );
+  background-size: 200% 100%;
+  background-position: 0 0;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: accent-shimmer 2.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accent-shimmer {
+    animation: none;
+    /* Static muted text — no flowing band — for reduced-motion users. */
+    background-image: none;
+    color: var(--muted-foreground);
+    -webkit-text-fill-color: var(--muted-foreground);
+  }
 }
 
 @keyframes sidebar-grid-drift {
