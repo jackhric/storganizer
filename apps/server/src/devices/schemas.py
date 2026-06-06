@@ -20,6 +20,7 @@ class DeviceUpdate(BaseModel):
 class DeviceRead(TimestampedRead):
     name: str
     url: str
+    icon: str
     led_count: int
     grid_width: int
     grid_height: int

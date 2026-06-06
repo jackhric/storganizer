@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryClient } from "@tanstack/react-query";
 import { AddDeviceDialog } from "@/features/devices/components/add-device-dialog";
+import { DeviceIconPicker } from "@/features/devices/components/device-icon-picker";
+import { DeviceIcon } from "@/features/devices/components/device-icon";
 import {
   getListDevicesQueryKey,
   useDeleteDevice,
@@ -79,14 +81,7 @@ function DeviceDetail({ device, onDeleted }: { device: DeviceRead; onDeleted: ()
       {/* Header */}
       <div className="px-6 py-5 border-b border-border">
         <div className="flex items-center gap-3">
-          <img
-            src="/wled_device.png"
-            alt="device"
-            width={40}
-            height={40}
-            className={cn("shrink-0", !device.is_online && "grayscale opacity-40")}
-            style={{ imageRendering: "pixelated" }}
-          />
+          <DeviceIconPicker device={device} />
           <div className="min-w-0 flex-1">
             {editingName ? (
               <input
@@ -265,14 +260,7 @@ export default function WledSettingsPage() {
                         selectedId === device.id && "bg-muted"
                       )}
                     >
-                      <img
-                        src="/wled_device.png"
-                        alt="device"
-                        width={32}
-                        height={32}
-                        className={cn("shrink-0", !device.is_online && "grayscale opacity-40")}
-                        style={{ imageRendering: "pixelated" }}
-                      />
+                      <DeviceIcon device={device} size={32} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{device.name}</p>
                         <p className="text-xs text-muted-foreground truncate">{device.url}</p>

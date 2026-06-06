@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.devices import storage
 from src.devices.exceptions import WLEDUnreachableError
 from src.devices.models import Device
 from src.wled import client as wled
@@ -73,12 +74,26 @@ async def update_name(db: AsyncSession, device_id: str, name: str) -> Device | N
     return device
 
 
+async def set_icon(
+    db: AsyncSession, device_id: str, filename: str, data: bytes
+) -> Device | None:
+    device = await db.get(Device, device_id)
+    if device is None:
+        return None
+    # save_icon rmtree-overwrites the device dir, so the previous icon is cleaned.
+    device.icon = storage.save_icon(device_id, filename, data)
+    await db.commit()
+    await db.refresh(device)
+    return device
+
+
 async def delete(db: AsyncSession, device_id: str) -> bool:
     device = await db.get(Device, device_id)
     if device is None:
         return False
     await db.delete(device)
     await db.commit()
+    storage.delete_icon(device_id)
     return True
 
 

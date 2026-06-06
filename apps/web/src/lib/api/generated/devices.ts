@@ -24,6 +24,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BodySetDeviceIcon,
   DeviceCreate,
   DeviceRead,
   DeviceSyncResult,
@@ -447,7 +448,179 @@ export const useDeleteDevice = <TError = HTTPValidationError,
       > => {
       return useMutation(getDeleteDeviceMutationOptions(options), queryClient);
     }
-    export const getSyncDeviceUrl = (deviceId: string,) => {
+    export const getSetDeviceIconUrl = (deviceId: string,) => {
+
+
+
+
+  return `/api/devices/${deviceId}/icon`
+}
+
+/**
+ * @summary Set Device Icon
+ */
+export const setDeviceIcon = async (deviceId: string,
+    bodySetDeviceIcon: BodySetDeviceIcon, options?: RequestInit): Promise<DeviceRead> => {
+    const formData = new FormData();
+formData.append(`image`, bodySetDeviceIcon.image);
+
+  return customFetch<DeviceRead>(getSetDeviceIconUrl(deviceId),
+  {
+    ...options,
+    method: 'PUT'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+export const getSetDeviceIconMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setDeviceIcon>>, TError,{deviceId: string;data: BodySetDeviceIcon}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setDeviceIcon>>, TError,{deviceId: string;data: BodySetDeviceIcon}, TContext> => {
+
+const mutationKey = ['setDeviceIcon'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setDeviceIcon>>, {deviceId: string;data: BodySetDeviceIcon}> = (props) => {
+          const {deviceId,data} = props ?? {};
+
+          return  setDeviceIcon(deviceId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetDeviceIconMutationResult = NonNullable<Awaited<ReturnType<typeof setDeviceIcon>>>
+    export type SetDeviceIconMutationBody = BodySetDeviceIcon
+    export type SetDeviceIconMutationError = HTTPValidationError
+
+    /**
+ * @summary Set Device Icon
+ */
+export const useSetDeviceIcon = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setDeviceIcon>>, TError,{deviceId: string;data: BodySetDeviceIcon}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setDeviceIcon>>,
+        TError,
+        {deviceId: string;data: BodySetDeviceIcon},
+        TContext
+      > => {
+      return useMutation(getSetDeviceIconMutationOptions(options), queryClient);
+    }
+    export const getGetDeviceIconUrl = (deviceId: string,) => {
+
+
+
+
+  return `/api/devices/${deviceId}/icon`
+}
+
+/**
+ * @summary Get Device Icon
+ */
+export const getDeviceIcon = async (deviceId: string, options?: RequestInit): Promise<unknown> => {
+
+  return customFetch<unknown>(getGetDeviceIconUrl(deviceId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDeviceIconQueryKey = (deviceId: string,) => {
+    return [
+    `/api/devices/${deviceId}/icon`
+    ] as const;
+    }
+
+
+export const getGetDeviceIconQueryOptions = <TData = Awaited<ReturnType<typeof getDeviceIcon>>, TError = HTTPValidationError>(deviceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDeviceIcon>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDeviceIconQueryKey(deviceId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDeviceIcon>>> = () => getDeviceIcon(deviceId, requestOptions);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: deviceId !== null && deviceId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDeviceIcon>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDeviceIconQueryResult = NonNullable<Awaited<ReturnType<typeof getDeviceIcon>>>
+export type GetDeviceIconQueryError = HTTPValidationError
+
+
+export function useGetDeviceIcon<TData = Awaited<ReturnType<typeof getDeviceIcon>>, TError = HTTPValidationError>(
+ deviceId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDeviceIcon>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDeviceIcon>>,
+          TError,
+          Awaited<ReturnType<typeof getDeviceIcon>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDeviceIcon<TData = Awaited<ReturnType<typeof getDeviceIcon>>, TError = HTTPValidationError>(
+ deviceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDeviceIcon>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDeviceIcon>>,
+          TError,
+          Awaited<ReturnType<typeof getDeviceIcon>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDeviceIcon<TData = Awaited<ReturnType<typeof getDeviceIcon>>, TError = HTTPValidationError>(
+ deviceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDeviceIcon>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Device Icon
+ */
+
+export function useGetDeviceIcon<TData = Awaited<ReturnType<typeof getDeviceIcon>>, TError = HTTPValidationError>(
+ deviceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDeviceIcon>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDeviceIconQueryOptions(deviceId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getSyncDeviceUrl = (deviceId: string,) => {
 
 
 

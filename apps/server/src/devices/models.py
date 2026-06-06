@@ -17,6 +17,7 @@ class Device(Base, IDMixin, TimestampMixin):
 
     name: Mapped[str] = mapped_column(unique=True)
     url: Mapped[str] = mapped_column(unique=True)
+    icon: Mapped[str] = mapped_column(default="")  # stored filename ("" = none)
     led_count: Mapped[int] = mapped_column(default=0)
     grid_width: Mapped[int] = mapped_column(default=0)
     grid_height: Mapped[int] = mapped_column(default=0)

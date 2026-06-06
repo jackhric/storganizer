@@ -40,6 +40,7 @@ export interface DeviceRead {
   updated_at: string;
   name: string;
   url: string;
+  icon: string;
   led_count: number;
   grid_width: number;
   grid_height: number;
@@ -94,6 +95,10 @@ export interface BodyCreateItem {
   external_links?: string | null;
   tags?: string | null;
   image?: Blob | null;
+}
+
+export interface BodySetDeviceIcon {
+  image: Blob;
 }
 
 export interface BodyUpdateItem {

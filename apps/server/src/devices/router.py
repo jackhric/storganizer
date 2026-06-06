@@ -6,16 +6,26 @@ hardware, and there are extra sync/refresh actions.
     GET    /devices/{id}         read
     PATCH  /devices/{id}         rename
     DELETE /devices/{id}         delete (cascades to cells + assignments)
+    PUT    /devices/{id}/icon    set the device icon (multipart image upload)
+    GET    /devices/{id}/icon    serve the device icon (original file)
     POST   /devices/{id}/sync    re-pull LED geometry from WLED
     POST   /devices/refresh      run the heartbeat now
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cells import service as cells_service
 from src.core.database import get_session
-from src.devices import service
+from src.devices import service, storage
 from src.devices.exceptions import WLEDUnreachableError
 from src.devices.schemas import (
     DeviceCreate,
@@ -68,6 +78,33 @@ async def update_device(
 async def delete_device(device_id: str, db: AsyncSession = Depends(get_session)):
     if not await service.delete(db, device_id):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "device not found")
+
+
+@router.put("/{device_id}/icon", response_model=DeviceRead)
+async def set_device_icon(
+    device_id: str,
+    image: UploadFile = File(...),
+    db: AsyncSession = Depends(get_session),
+):
+    device = await service.set_icon(
+        db, device_id, image.filename or "icon", await image.read()
+    )
+    if device is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "device not found")
+    return device
+
+
+@router.get("/{device_id}/icon")
+async def get_device_icon(device_id: str, db: AsyncSession = Depends(get_session)):
+    device = await service.get(db, device_id)
+    if device is None or not device.icon:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "no icon")
+    # No media_type override: the GIF/PNG content type is inferred from the
+    # extension so animation is preserved.
+    path = storage.original_path(device_id, device.icon)
+    if path is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "no icon")
+    return FileResponse(path)
 
 
 @router.post("/{device_id}/sync", response_model=DeviceSyncResult)

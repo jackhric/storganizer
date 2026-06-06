@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { HardDriveIcon } from "lucide-react";
 import { SingleSelectFilter } from "@/components/single-select-filter";
-import { cn } from "@/lib/utils";
+import { DeviceIcon } from "@/features/devices/components/device-icon";
 import type { DeviceRead as Device } from "@/lib/api/generated/storganizerAPI.schemas";
 
 type Props = {
@@ -23,17 +23,7 @@ export function DeviceSelect({ devices, selectedId, onSelect }: Props) {
       (devices ?? []).map((d) => ({
         value: d.id,
         label: d.name,
-        leading: (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src="/wled_device.png"
-            alt=""
-            width={16}
-            height={16}
-            className={cn("shrink-0", !d.is_online && "grayscale opacity-40")}
-            style={{ imageRendering: "pixelated" }}
-          />
-        ),
+        leading: <DeviceIcon device={d} size={16} />,
       })),
     [devices],
   );

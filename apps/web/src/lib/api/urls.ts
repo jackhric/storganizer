@@ -15,3 +15,10 @@ export function itemImageUrl(
   const path = `/api/items/${itemId}/image${query ? `?${query}` : ""}`;
   return `${BACKEND_URL}${path}`;
 }
+
+export function deviceIconUrl(deviceId: string, version?: string): string {
+  // Cache-buster keyed off the device's updated_at: the icon URL is otherwise
+  // stable across re-uploads, so without this the browser serves the stale icon.
+  const query = version ? `?v=${encodeURIComponent(version)}` : "";
+  return `${BACKEND_URL}/api/devices/${deviceId}/icon${query}`;
+}
