@@ -1,8 +1,6 @@
 "use client";
 
-import { XIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { useFindStore } from "@/lib/stores/find";
 import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
@@ -63,11 +61,7 @@ export function SelectionBar({ items }: Props) {
         <span className="font-medium text-foreground/60 uppercase tracking-wider text-[10px]">
           Selected
         </span>
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="flex cursor-default items-center -space-x-2"
-        >
+        <div className="flex items-center -space-x-2">
           {visible.map((item) => (
             <div key={item.id} title={item.name}>
               <Thumb item={item} size="sm" />
@@ -89,21 +83,22 @@ export function SelectionBar({ items }: Props) {
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted"
+              role="button"
+              tabIndex={0}
+              onClick={() => remove(item.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  remove(item.id);
+                }
+              }}
+              aria-label={`Remove ${item.name} from selection`}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 outline-none hover:bg-muted focus-visible:bg-muted"
             >
               <Thumb item={item} />
               <span className="min-w-0 flex-1 truncate text-sm font-medium">
                 {item.name}
               </span>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                onClick={() => remove(item.id)}
-                aria-label={`Remove ${item.name} from selection`}
-              >
-                <XIcon className="h-3.5 w-3.5" />
-              </Button>
             </div>
           ))}
         </div>
