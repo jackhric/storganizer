@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0](https://github.com/jackhric/storganizer/compare/storganizer-v0.5.0...storganizer-v0.6.0) (2026-06-06)
+
+
+### Features
+
+* **devices:** add editable per-device icons ([71628ce](https://github.com/jackhric/storganizer/commit/71628cea1a5396567ba4f288da3fe94c91f38a59))
+* **items:** hover-reveal warning for unassigned items ([2aa641d](https://github.com/jackhric/storganizer/commit/2aa641d88b811bddc5665e228a405f711abe5e43))
+* **search:** live LED preview of global search results ([0f7d443](https://github.com/jackhric/storganizer/commit/0f7d443ac8fff292e5774f9508f52d33dbaf50c3))
+* **search:** show item tag dots in global search results ([27a442a](https://github.com/jackhric/storganizer/commit/27a442ad3da433a851425df63d9b142f9173076c))
+
 ## [0.5.0](https://github.com/jackhric/storganizer/compare/storganizer-v0.4.0...storganizer-v0.5.0) (2026-06-03)
 
 
