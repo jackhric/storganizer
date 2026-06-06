@@ -178,15 +178,6 @@
   }
 }
 
-@keyframes sidebar-grid-drift {
-  from {
-    transform: translate3d(-240px, -240px, 0);
-  }
-  to {
-    transform: translate3d(0, 0, 0);
-  }
-}
-
 .sidebar-grid-mask {
   position: absolute;
   inset: 0;
@@ -202,9 +193,8 @@
     linear-gradient(to right, var(--sidebar-border) 1px, transparent 1px),
     linear-gradient(to bottom, var(--sidebar-border) 1px, transparent 1px);
   background-size: 24px 24px;
-  animation: sidebar-grid-drift 30s linear infinite;
+  /* Drift is now driven by Motion in app-sidebar.tsx. */
   will-change: transform;
-  transform: translateZ(0);
   backface-visibility: hidden;
 }
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
 import { BoxIcon, LinkIcon, SettingsIcon, TagIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/logo";
@@ -39,7 +40,19 @@ export function AppSidebar() {
         aria-hidden
         className="sidebar-grid-mask pointer-events-none opacity-80 group-data-[collapsible=icon]:opacity-60"
       >
-        <div className="sidebar-grid" />
+        <motion.div
+          className="sidebar-grid"
+          // The grid cell is 24px and the element is inset by -240px (10 cells),
+          // so drifting a full 240px in both axes loops seamlessly.
+          initial={{ x: -240, y: -240 }}
+          animate={{ x: 0, y: 0 }}
+          transition={{
+            duration: 30,
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "loop",
+          }}
+        />
       </div>
       <SidebarHeader className="px-4 py-5 flex flex-col items-center justify-center gap-2">
         <Link href="/">
