@@ -2,10 +2,9 @@
 
 import { useState, type DragEvent } from "react";
 import { motion } from "motion/react";
-import { ZapIcon, ZapOffIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, AlertTriangleIcon, SearchIcon, ImageIcon, Loader2Icon } from "lucide-react";
+import { ZapIcon, ZapOffIcon, PencilIcon, Trash2Icon, ExternalLinkIcon, SearchIcon, ImageIcon, Loader2Icon, AlertTriangleIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { itemImageUrl } from "@/lib/api/urls";
 import { cn } from "@/lib/utils";
 import { deterministicColor } from "@/lib/tags";
@@ -22,6 +21,8 @@ const HOVER_SCALE = 1.01;
 const HOVER_LIFT_Y = -.5;
 const TAP_SCALE = 0.98;
 const SPRING = { type: "spring" as const, stiffness: 800, damping: 22, mass: 0.7 };
+// Dedicated spring for the unassigned warning's corner→center glide — bouncier/slower than the card lift.
+const WARNING_SPRING = { type: "spring" as const, stiffness: 800, damping: 40, mass: 0.9 };
 // -----------------------------------------------------------------------------
 
 type Props = {
@@ -97,7 +98,10 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
   return (
     <motion.div
       className="relative"
-      whileHover={{ scale: HOVER_SCALE, y: HOVER_LIFT_Y }}
+      initial="rest"
+      whileHover="hover"
+      animate="rest"
+      variants={{ rest: { scale: 1, y: 0 }, hover: { scale: HOVER_SCALE, y: HOVER_LIFT_Y } }}
       whileTap={{ scale: TAP_SCALE }}
       transition={SPRING}
       onDragEnter={onDragEnter}
@@ -116,12 +120,21 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
     >
       {/* Background: image or initials */}
       {imageUrl ? (
-        <img
+        <motion.img
           src={imageUrl}
           alt={item.name}
           loading="lazy"
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          variants={
+            !hasAssignment
+              ? {
+                  rest: { filter: "grayscale(1) blur(0px) brightness(1)" },
+                  hover: { filter: "grayscale(1) blur(4px) brightness(0.6)" },
+                }
+              : undefined
+          }
+          transition={{ duration: 0.12, ease: "easeOut" }}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -174,23 +187,8 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
         </Button>
       </div>
 
-      {/* Top-left unassigned warning */}
-      {!hasAssignment && (
-        <div className="absolute left-1.5 top-1.5 z-10">
-          <Tooltip>
-            <TooltipTrigger
-              aria-label="Not assigned to any location"
-              onClick={(e) => e.stopPropagation()}
-              className="flex h-7 w-7 items-center justify-center rounded-md bg-background/70 text-amber-500 backdrop-blur-sm"
-            >
-              <AlertTriangleIcon className="h-3.5 w-3.5" />
-            </TooltipTrigger>
-            <TooltipContent>Not assigned to any location</TooltipContent>
-          </Tooltip>
-        </div>
-      )}
-
-      {/* Click-to-find hint (hover only) — top-left */}
+      {/* Click-to-find hint (hover only) — top-left. Hidden for unassigned items, whose hover cue is the blur. */}
+      {hasAssignment && (
       <div className="pointer-events-none absolute left-2 top-2 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         <div className="flex items-center gap-1.5 rounded-full bg-background/85 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm">
           {isHighlighting ? (
@@ -201,10 +199,40 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
           {isHighlighting ? "Click to clear" : "Click to find"}
         </div>
       </div>
+      )}
 
       {/* Searching indicator (bottom-right) */}
       {isHighlighting && (
         <SearchIcon className="absolute bottom-2 right-2 z-20 h-7 w-7 text-white drop-shadow-md animate-pulse" />
+      )}
+
+      {/* Unassigned warning — rests bottom-right, glides to center on hover. Hidden while searching. */}
+      {!hasAssignment && !isHighlighting && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center @container-size">
+          {/* At rest the icon is translated to the bottom-right corner; on hover it eases back to center. */}
+          <motion.div
+            variants={{
+              rest: { x: "calc(50cqw - 1.375rem)", y: "calc(50cqh - 1.375rem)", scale: 1 },
+              hover: { x: 0, y: 0, scale: 2 },
+            }}
+            transition={WARNING_SPRING}
+          >
+            <AlertTriangleIcon className="h-7 w-7 text-yellow-400 drop-shadow-md" />
+          </motion.div>
+
+          {/* Label below the centered icon — fades in only after the triangle has settled. */}
+          <motion.span
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-7 whitespace-nowrap text-sm font-bold text-white drop-shadow-md"
+            variants={{
+              // Fade in after the icon settles; fade out almost immediately (no delay, quick duration).
+              rest: { opacity: 0, transition: { duration: 0.06, ease: "easeOut" } },
+              hover: { opacity: 1, transition: { duration: 0.18, ease: "easeOut", delay: 0.22 } },
+            }}
+            initial={false}
+          >
+            Item Unassigned
+          </motion.span>
+        </div>
       )}
 
       {/* File drag-over overlay */}
@@ -232,11 +260,17 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
     </Card>
 
     {/* Bottom text overlay (sibling of Card so its hover labels aren't clipped) */}
-    <div
+    <motion.div
       className={cn(
         "pointer-events-none absolute inset-x-0 bottom-0 z-10 flex cursor-pointer flex-col gap-1 p-2.5 text-white",
-        isHighlighting && "pr-11",
+        // Reserve room for whichever bottom-right icon is showing: the search pulse or the unassigned warning.
+        (isHighlighting || !hasAssignment) && "pr-11",
       )}
+      // Unassigned cards fade their title out on hover so the centered warning stands alone.
+      variants={
+        !hasAssignment ? { rest: { opacity: 1 }, hover: { opacity: 0 } } : undefined
+      }
+      transition={{ duration: 0.12, ease: "easeOut" }}
     >
       {tags.length > 0 && (
         <div className="pointer-events-auto flex items-center gap-1">
@@ -262,7 +296,7 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
     </motion.div>
   );
 }

@@ -111,11 +111,11 @@ export default function HomePage() {
               className="gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <ZapOffIcon className="h-3.5 w-3.5" />
-              Clear LEDs
+              Clear Selection
             </Button>
             <Button size="lg" onClick={() => setFormOpen(true)} className="gap-1.5">
               <PlusIcon className="h-3.5 w-3.5" />
-              Add item
+              Add Item
             </Button>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function HomePage() {
 
       {/* Items grid */}
       {itemsLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {Array.from({ length: 10 }).map((_, i) => (
             <Skeleton key={i} className="aspect-square rounded-xl" />
           ))}
@@ -202,7 +202,7 @@ export default function HomePage() {
       ) : (
         <div
           ref={gridRef}
-          className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+          className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
         >
           {filtered.map((item) => (
             <ItemCard
