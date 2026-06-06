@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/command";
 import { RandomItemCarousel } from "@/features/items/components/random-item-carousel";
 import { SelectionOutline } from "@/features/items/components/selection-outline";
+import { TagDot, TagOverflowDot } from "@/features/tags/components/tag-dot";
+import { deterministicColor } from "@/lib/tags";
 import {
   useFindSelection,
   useSearchPreview,
@@ -145,7 +147,7 @@ export function GlobalSearch() {
                   // unique when two items share a name.)
                   value={`${item.name} ${item.id}`}
                   onSelect={() => handleSelect(item)}
-                  className="relative gap-3 py-2.5 text-base"
+                  className="relative gap-3 py-2.5 text-base cursor-pointer"
                 >
                   {isSelected(item.id) && <SelectionOutline rounded={8} />}
                   {item.image ? (
@@ -160,7 +162,29 @@ export function GlobalSearch() {
                       {item.name.slice(0, 2).toUpperCase()}
                     </span>
                   )}
-                  <span className="truncate">{item.name}</span>
+                  <span className="flex-1 truncate">{item.name}</span>
+                  {(item.tags ?? []).length > 0 && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      {(item.tags ?? []).slice(0, 2).map((tag) => (
+                        <TagDot
+                          key={tag.id}
+                          label={tag.name}
+                          color={tag.color || deterministicColor(tag.name)}
+                        />
+                      ))}
+                      {(item.tags ?? []).length > 2 && (
+                        <TagOverflowDot
+                          count={(item.tags ?? []).length - 2}
+                          hiddenTags={(item.tags ?? [])
+                            .slice(2)
+                            .map((t) => ({
+                              name: t.name,
+                              color: t.color || deterministicColor(t.name),
+                            }))}
+                        />
+                      )}
+                    </div>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
