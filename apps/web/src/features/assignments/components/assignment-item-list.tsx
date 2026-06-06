@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { GripVerticalIcon, PackageOpenIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { GripVerticalIcon, PackageOpenIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
@@ -21,12 +28,16 @@ type Props = {
    * item here is a no-op.
    */
   isAssignedDragActive?: boolean;
+  onEditItem: (item: ItemRead) => void;
+  onDeleteItem: (item: ItemRead) => void;
 };
 
 export function AssignmentItemList({
   items,
   isLoading,
   isAssignedDragActive,
+  onEditItem,
+  onDeleteItem,
 }: Props) {
   const [formOpen, setFormOpen] = useState(false);
 
@@ -40,7 +51,10 @@ export function AssignmentItemList({
   const showTrashOverlay = !!isAssignedDragActive;
 
   return (
-    <div ref={setNodeRef} className="relative flex flex-col lg:w-[340px] shrink-0">
+    <div
+      ref={setNodeRef}
+      className="relative flex min-h-0 flex-col lg:w-[340px] shrink-0 lg:overflow-hidden"
+    >
       {showTrashOverlay && (
         <div
           className={cn(
@@ -89,7 +103,7 @@ export function AssignmentItemList({
 
       <ItemFormDialog open={formOpen} onOpenChange={setFormOpen} />
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         {isLoading ? (
           <ul className="divide-y divide-border">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -118,7 +132,12 @@ export function AssignmentItemList({
         ) : (
           <ul className="divide-y divide-border">
             {items.map((item) => (
-              <DraggableItemRow key={item.id} item={item} />
+              <DraggableItemRow
+                key={item.id}
+                item={item}
+                onEditItem={onEditItem}
+                onDeleteItem={onDeleteItem}
+              />
             ))}
           </ul>
         )}
@@ -127,7 +146,15 @@ export function AssignmentItemList({
   );
 }
 
-function DraggableItemRow({ item }: { item: ItemRead }) {
+function DraggableItemRow({
+  item,
+  onEditItem,
+  onDeleteItem,
+}: {
+  item: ItemRead;
+  onEditItem: (item: ItemRead) => void;
+  onDeleteItem: (item: ItemRead) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `item-${item.id}`,
     data: { itemId: item.id },
@@ -137,7 +164,10 @@ function DraggableItemRow({ item }: { item: ItemRead }) {
     ? itemImageUrl(item.id, "80x80", item.updated_at)
     : null;
 
-  return (
+  // Build the row once and hand it to the context-menu trigger via `render`, so
+  // the right-click menu attaches without wrapping the draggable <li> in extra
+  // layout — same approach the grid cells use.
+  const rowNode = (
     <li
       ref={setNodeRef}
       {...listeners}
@@ -169,5 +199,34 @@ function DraggableItemRow({ item }: { item: ItemRead }) {
       </div>
       <p className="text-sm font-medium truncate flex-1">{item.name}</p>
     </li>
+  );
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger render={rowNode} />
+      <ContextMenuContent>
+        {/* Read-only header: which item was right-clicked. */}
+        <div className="px-1.5 py-1 select-none">
+          <p className="truncate text-sm font-medium">{item.name}</p>
+        </div>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          className="cursor-pointer"
+          onClick={() => onEditItem(item)}
+        >
+          <PencilIcon />
+          Edit Item
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          className="cursor-pointer"
+          variant="destructive"
+          onClick={() => onDeleteItem(item)}
+        >
+          <Trash2Icon />
+          Delete Item
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

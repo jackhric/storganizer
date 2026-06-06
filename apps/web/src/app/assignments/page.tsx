@@ -14,6 +14,7 @@ import { CellInfoPane } from "@/features/assignments/components/cell-info-pane";
 import { DeviceSelect } from "@/features/assignments/components/device-select";
 import { GridPreview } from "@/features/assignments/components/grid-preview";
 import { ItemFormDialog } from "@/features/items/components/item-form-dialog";
+import { DeleteItemDialog } from "@/features/items/components/delete-item-dialog";
 import type { Rgb } from "@/lib/color/hsl";
 import type {
   ItemRead,
@@ -55,6 +56,7 @@ export default function AssignmentsPage() {
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [breathPhase, setBreathPhase] = useState(0);
   const [editingItem, setEditingItem] = useState<ItemRead | null>(null);
+  const [deletingItem, setDeletingItem] = useState<ItemRead | null>(null);
 
   const { data: items, isLoading: itemsLoading } = useListItems();
   const { data: devices } = useListDevices();
@@ -277,11 +279,13 @@ export default function AssignmentsPage() {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex h-full min-h-[calc(100vh-3rem)] flex-col lg:flex-row lg:divide-x lg:divide-border -m-6">
+      <div className="flex h-full min-h-[calc(100vh-3rem)] flex-col lg:h-[calc(100vh-3rem)] lg:min-h-0 lg:flex-row lg:divide-x lg:divide-border lg:overflow-hidden -m-6">
         <AssignmentItemList
           items={items}
           isLoading={itemsLoading}
           isAssignedDragActive={isDragging && dragFromCellId !== null}
+          onEditItem={handleEditItem}
+          onDeleteItem={setDeletingItem}
         />
 
         <div className="flex flex-1 flex-col min-h-0 border-y border-border lg:border-y-0">
@@ -335,6 +339,13 @@ export default function AssignmentsPage() {
           if (!open) setEditingItem(null);
         }}
         item={editingItem ?? undefined}
+      />
+
+      <DeleteItemDialog
+        item={deletingItem}
+        onOpenChange={(open) => {
+          if (!open) setDeletingItem(null);
+        }}
       />
 
       <DragOverlay dropAnimation={null} modifiers={[snapCenterToCursor]}>

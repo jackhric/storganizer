@@ -199,6 +199,9 @@ function DroppableCell({
           Edit Item
         </ContextMenuItem>
         {assignment && (
+          <ContextMenuSeparator />
+        )}
+        {assignment && (
           <ContextMenuItem
             className="cursor-pointer"
             variant="destructive"
