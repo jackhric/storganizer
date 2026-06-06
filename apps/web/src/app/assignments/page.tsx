@@ -73,17 +73,21 @@ export default function AssignmentsPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
 
-  useEffect(() => {
-    if (!selectedDeviceId && devices && devices.length > 0) {
-      setSelectedDeviceId(devices[0].id);
-    }
-  }, [devices, selectedDeviceId]);
+  // Default to the first device once devices load, without an effect: adjust
+  // state during render when no device is selected yet.
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  if (!selectedDeviceId && devices && devices.length > 0) {
+    setSelectedDeviceId(devices[0].id);
+  }
 
   // Clear the selected cell when the device changes — cell ids are
-  // device-scoped, so a stale selection makes no sense.
-  useEffect(() => {
+  // device-scoped, so a stale selection makes no sense. Reset during render on
+  // the device-id change rather than in an effect.
+  const [prevDeviceId, setPrevDeviceId] = useState(selectedDeviceId);
+  if (selectedDeviceId !== prevDeviceId) {
+    setPrevDeviceId(selectedDeviceId);
     setSelectedCellId(null);
-  }, [selectedDeviceId]);
+  }
 
   // Esc clears the selection.
   useEffect(() => {

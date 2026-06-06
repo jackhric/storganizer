@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,13 +34,18 @@ export function AddTagDialog({ open, onOpenChange }: Props) {
     },
   });
 
-  useEffect(() => {
+  // Reset the form each time the dialog opens, without an effect: adjust state
+  // during render on the closed→open transition.
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setName("");
       setColor(randomTagColor());
       setError(null);
     }
-  }, [open]);
+  }
 
   async function submit() {
     const trimmed = name.trim();

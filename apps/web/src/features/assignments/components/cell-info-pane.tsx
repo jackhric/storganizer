@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MousePointerClickIcon, Trash2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,9 +115,17 @@ function OccupiedDetails({
 
   // Local draft so the user can type freely; commit on blur or Enter.
   const [draft, setDraft] = useState(String(assignment.quantity));
-  useEffect(() => {
+
+  // Re-sync the draft when the assignment or its quantity changes (e.g. a new
+  // cell is selected, or the quantity is updated elsewhere), without an effect:
+  // adjust state during render when the source value changes.
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const sourceKey = `${assignment.id}:${assignment.quantity}`;
+  const [prevSourceKey, setPrevSourceKey] = useState(sourceKey);
+  if (sourceKey !== prevSourceKey) {
+    setPrevSourceKey(sourceKey);
     setDraft(String(assignment.quantity));
-  }, [assignment.id, assignment.quantity]);
+  }
 
   function commit() {
     const next = Number.parseInt(draft, 10);

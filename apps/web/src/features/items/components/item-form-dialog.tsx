@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
@@ -57,7 +57,14 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
     formState: { errors },
   } = useForm<FormValues>({ resolver: standardSchemaResolver(schema) });
 
-  useEffect(() => {
+  // Populate the form each time the dialog opens (or the edited item changes
+  // while open), without an effect: adjust state during render when the source
+  // values change. `reset` comes from react-hook-form and is stable.
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [prevKey, setPrevKey] = useState<string | null>(null);
+  const openKey = open ? (item?.id ?? "new") : null;
+  if (openKey !== prevKey) {
+    setPrevKey(openKey);
     if (open) {
       if (item) {
         reset({
@@ -83,7 +90,7 @@ export function ItemFormDialog({ open, onOpenChange, item }: Props) {
       setImageFile(null);
       setSubmitError(null);
     }
-  }, [open, item, reset]);
+  }
 
   function addLink() {
     setLinks((prev) => [...prev, { label: "", url: "" }]);

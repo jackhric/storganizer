@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ShuffleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,11 +14,17 @@ export function SelectionBorderPreview() {
   const [seed, setSeed] = useState(0);
 
   const pool = useMemo(() => items ?? [], [items]);
-  const pick = pool.length > 0 ? pool[seed % pool.length] : null;
 
-  useEffect(() => {
-    if (pool.length > 0) setSeed(Math.floor(Math.random() * pool.length));
-  }, [pool.length]);
+  // Pick a random item to preview once the pool first populates, without an
+  // effect: re-seed during render on the empty→populated transition.
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [seededFor, setSeededFor] = useState(0);
+  if (pool.length > 0 && seededFor !== pool.length) {
+    setSeededFor(pool.length);
+    setSeed(Math.floor(Math.random() * pool.length));
+  }
+
+  const pick = pool.length > 0 ? pool[seed % pool.length] : null;
 
   const imageUrl =
     pick && pick.image

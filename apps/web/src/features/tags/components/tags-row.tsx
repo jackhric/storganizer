@@ -31,9 +31,14 @@ export function TagsRow({
   const [draft, setDraft] = useState(tag.name);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  // Re-sync the draft when the tag is renamed elsewhere, without an effect:
+  // adjust state during render when the source value changes.
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [prevName, setPrevName] = useState(tag.name);
+  if (tag.name !== prevName) {
+    setPrevName(tag.name);
     setDraft(tag.name);
-  }, [tag.name]);
+  }
 
   useEffect(() => {
     if (editing) inputRef.current?.select();
