@@ -58,6 +58,33 @@ export function recolorFrame(frame: WarlsFrame, color: Rgb): WarlsFrame {
 }
 
 /**
+ * Composite two frames into a new one: `over` is layered on top of `under`, so
+ * on any LED lit by both, `over`'s color wins. Used to render the search
+ * preview (`under`, dimmed) beneath the manual selections (`over`, full
+ * brightness) without either layer mutating the other.
+ */
+export function overlayFrames(
+  under: WarlsFrame | null,
+  over: WarlsFrame | null,
+): WarlsFrame | null {
+  if (!under) return over;
+  if (!over) return under;
+  const out: WarlsFrame = new Map();
+  for (const [deviceId, perDevice] of under) {
+    out.set(deviceId, new Map(perDevice));
+  }
+  for (const [deviceId, perDevice] of over) {
+    let target = out.get(deviceId);
+    if (!target) {
+      target = new Map<number, Rgb>();
+      out.set(deviceId, target);
+    }
+    for (const [led, color] of perDevice) target.set(led, color);
+  }
+  return out;
+}
+
+/**
  * Return a brightness-scaled copy of a merged frame. `factor === 1` returns the
  * frame unchanged (the solid path pays no per-LED cost).
  */

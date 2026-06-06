@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/command";
 import { RandomItemCarousel } from "@/features/items/components/random-item-carousel";
 import { SelectionOutline } from "@/features/items/components/selection-outline";
-import { useFindSelection } from "@/features/items/hooks/use-find-selection";
+import {
+  useFindSelection,
+  useSearchPreview,
+} from "@/features/items/hooks/use-find-selection";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useIsMac } from "@/hooks/use-is-mac";
 import { useListItems } from "@/lib/api/generated/items";
@@ -62,6 +65,20 @@ export function GlobalSearch() {
   // Selection is backed by the global find store, so toggling here mirrors the
   // Items page exactly — and items already selected elsewhere show as selected.
   const { isSelected, toggle } = useFindSelection();
+
+  // Live preview: light (dimly) the cells of every item currently in the
+  // results as the user types. This is a transient layer beneath the manual
+  // selections above — refining the query re-lights only the current matches,
+  // and emptying the query or closing the dialog clears it.
+  const { setPreviewItems, clearPreview } = useSearchPreview();
+
+  useEffect(() => {
+    if (open && trimmedQuery.length > 0) setPreviewItems(items);
+    else clearPreview();
+  }, [open, trimmedQuery, items, setPreviewItems, clearPreview]);
+
+  // Belt-and-suspenders: clear the preview if this component unmounts mid-search.
+  useEffect(() => () => clearPreview(), [clearPreview]);
 
   function handleSelect(item: ItemRead) {
     // "Find" the item (light its cells + mark it selected). The dialog stays
