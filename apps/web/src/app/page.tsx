@@ -103,7 +103,6 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <DeviceStatusBar devices={devices} />
             <Button
               variant="ghost"
               size="lg"
