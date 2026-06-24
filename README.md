@@ -11,6 +11,12 @@
 
 Storganizer lets you map physical storage locations (bins, drawers, shelves) to LEDs on a [WLED](https://kno.wled.ge/) device. Find any component instantly. Look up the part and the correct LED lights up in a jiffy!
 
+## Screenshots
+
+|              Inventory               |               Assignments                |               WLED devices               |
+| :----------------------------------: | :--------------------------------------: | :--------------------------------------: |
+| ![Inventory](docs/images/inventory.png) | ![Assignments](docs/images/assignments.png) | ![WLED devices](docs/images/wled-devices.jpeg) |
+
 ## Features
 
 - Manage an inventory of components with descriptions, quantities, categories, and datasheets
