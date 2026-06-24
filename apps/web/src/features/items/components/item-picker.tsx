@@ -65,7 +65,7 @@ export function ItemPicker({ items, value, onChange }: Props) {
                 <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-muted">
                   {url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={url} alt={item.name} className="h-full w-full object-cover" />
+                    <img src={url} alt={item.name} className="h-full w-full bg-white object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-muted-foreground/60">
                       {item.name.slice(0, 2).toUpperCase()}

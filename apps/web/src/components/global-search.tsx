@@ -155,7 +155,7 @@ export function GlobalSearch() {
                     <img
                       src={itemImageUrl(item.id, "64x64", item.updated_at)}
                       alt=""
-                      className="h-8 w-8 shrink-0 rounded object-cover"
+                      className="h-8 w-8 shrink-0 rounded bg-white object-cover"
                     />
                   ) : (
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-muted text-xs font-medium">

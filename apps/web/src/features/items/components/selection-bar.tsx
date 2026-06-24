@@ -27,7 +27,7 @@ function Thumb({ item, size = "md" }: { item: ItemRead; size?: "sm" | "md" }) {
           alt={item.name}
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover"
+          className="h-full w-full bg-white object-cover"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-muted-foreground/70">

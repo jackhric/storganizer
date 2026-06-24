@@ -147,7 +147,7 @@ function OccupiedDetails({
               src={imageUrl}
               alt={item?.name ?? ""}
               draggable={false}
-              className="h-full w-full object-cover"
+              className="h-full w-full bg-white object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">

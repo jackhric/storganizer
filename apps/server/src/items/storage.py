@@ -66,7 +66,17 @@ def thumbnail_path(item_id: str, filename: str, size: str) -> Path | None:
 
     if not dst.exists():
         with Image.open(src) as img:
-            img = img.convert("RGB")
+            # JPEG has no alpha; flatten transparency onto white instead of the
+            # default black so transparent PNGs don't render on a black square.
+            if img.mode in ("RGBA", "LA") or (
+                img.mode == "P" and "transparency" in img.info
+            ):
+                rgba = img.convert("RGBA")
+                background = Image.new("RGB", rgba.size, (255, 255, 255))
+                background.paste(rgba, mask=rgba.split()[-1])
+                img = background
+            else:
+                img = img.convert("RGB")
             img.thumbnail((width, height))
             img.save(dst, format="JPEG", quality=85)
     return dst

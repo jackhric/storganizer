@@ -125,7 +125,7 @@ export function ItemCard({ item, onHighlight, isHighlighting, onEdit, onDelete }
           alt={item.name}
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          className="absolute inset-0 h-full w-full bg-white object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           variants={
             !hasAssignment
               ? {

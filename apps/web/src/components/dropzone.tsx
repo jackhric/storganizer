@@ -133,7 +133,7 @@ export function Dropzone({
             <img
               src={previewUrl}
               alt="Preview"
-              className="absolute inset-0 h-full w-full object-contain p-2"
+              className="absolute inset-0 h-full w-full bg-white object-contain p-2"
             />
             <button
               type="button"

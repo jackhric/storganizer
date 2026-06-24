@@ -228,7 +228,7 @@ function CellContent({ item }: { item: ItemWithTags }) {
           src={imageUrl}
           alt={item.name}
           draggable={false}
-          className="absolute inset-0 h-full w-full object-cover rounded-sm pointer-events-none"
+          className="absolute inset-0 h-full w-full bg-white object-cover rounded-sm pointer-events-none"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">

@@ -366,7 +366,7 @@ function ItemDragGhost({ item }: { item: ItemRead }) {
           src={imageUrl}
           alt={item.name}
           draggable={false}
-          className="h-full w-full object-cover pointer-events-none"
+          className="h-full w-full bg-white object-cover pointer-events-none"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
