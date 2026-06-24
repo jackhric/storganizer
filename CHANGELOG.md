@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/jackhric/storganizer/compare/storganizer-v0.6.0...storganizer-v0.7.0) (2026-06-24)
+
+
+### Features
+
+* **assignments:** scrollable items list with right-click context menu ([f750e3a](https://github.com/jackhric/storganizer/commit/f750e3a361832f86fa9348a9885f773b85306bd3))
+
+
+### Bug Fixes
+
+* **items:** render transparent images on white instead of black ([e7e2c1b](https://github.com/jackhric/storganizer/commit/e7e2c1bf56fd15e66ec8d356e9a41c6142d02fed))
+
 ## [0.6.0](https://github.com/jackhric/storganizer/compare/storganizer-v0.5.0...storganizer-v0.6.0) (2026-06-06)
 
 
